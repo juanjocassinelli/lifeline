@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifeline</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='30' width='56' height='4' rx='2' fill='%237c5ff0'/%3E%3Ccircle cx='12' cy='32' r='5' fill='%23ef4444'/%3E%3Ccircle cx='28' cy='32' r='5' fill='%23eab308'/%3E%3Ccircle cx='44' cy='32' r='5' fill='%2322c55e'/%3E%3Ccircle cx='58' cy='32' r='4' fill='%237c5ff0'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  [data-theme="dark"] {
+    --bg:          #0e0e10;
+    --surface:     #18181b;
+    --surface2:    #27272a;
+    --surface3:    #1e1e21;
+    --border:      rgba(255,255,255,0.08);
+    --border2:     rgba(255,255,255,0.13);
+    --text:        #f4f4f5;
+    --muted:       #71717a;
+    --hint:        #3f3f46;
+    --rowbg:       #1f1f28;
+    --h1from:      #f4f4f5;
+    --h1to:        #a78bfa;
+    --thumb-border:#0e0e10;
+    --track-empty: rgba(255,255,255,0.1);
+    --canvas-bg:   #18181b;
+    --canvas-line: rgba(255,255,255,0.07);
+  }
+
+  [data-theme="light"] {
+    --bg:          #f8f7f4;
+    --surface:     #ffffff;
+    --surface2:    #f1f0ed;
+    --surface3:    #f5f4f1;
+    --border:      rgba(0,0,0,0.08);
+    --border2:     rgba(0,0,0,0.14);
+    --text:        #18181b;
+    --muted:       #71717a;
+    --hint:        #a1a1aa;
+    --rowbg:       #eeecf8;
+    --h1from:      #18181b;
+    --h1to:        #6d4ef0;
+    --thumb-border:#f8f7f4;
+    --track-empty: rgba(0,0,0,0.1);
+    --canvas-bg:   #ffffff;
+    --canvas-line: rgba(0,0,0,0.06);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ── Header ── */
+  .header-row {
+    width: 100%; max-width: 960px;
+    display: flex; justify-content: center; align-items: flex-start;
+    position: relative; margin-bottom: 2rem;
+  }
+  header { text-align: center; }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 400;
+    background: linear-gradient(135deg, var(--h1from) 30%, var(--h1to));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 0.3rem;
+  }
+  header p { color: var(--muted); font-size: 1rem; font-weight: 300; }
+
+  .controls {
+    position: absolute; right: 0; top: 4px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .pill-btn {
+    background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px;
+    padding: 6px 13px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+    transition: all 0.2s; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .pill-btn:hover { transform: scale(1.06); color: var(--text); }
+
+  @media (max-width: 700px) {
+    .controls { position: static; margin-bottom: 1rem; justify-content: center; }
+    .header-row { flex-direction: column; align-items: center; gap: 0.75rem; }
+  }
+
+  /* ── Layout helpers ── */
+  .full { width: 100%; max-width: 960px; }
+
+  .two-col {
+    width: 100%; max-width: 960px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start;
+  }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .panel-label {
+    font-size: 0.75rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1.25rem;
+  }
+
+  /* ── Form fields ── */
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+  .field:last-of-type { margin-bottom: 0; }
+
+  .field label {
+    font-size: 0.78rem; font-weight: 500; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .field label span { color: var(--text); font-weight: 500; font-size: 0.9rem; }
+
+  input[type="text"], input[type="number"], input[type="date"] {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 10px 14px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+    outline: none; width: 100%; transition: border-color 0.15s, background 0.3s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+    border-color: rgba(124,95,240,0.5);
+  }
+  input[type="text"]::placeholder, input[type="number"]::placeholder {
+    color: var(--hint);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5); cursor: pointer;
+  }
+
+  /* ── Sliders ── */
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 5px; border-radius: 3px;
+    outline: none; cursor: pointer; display: block;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid var(--thumb-border);
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid var(--thumb-border);
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+  /* ── Profile grid ── */
+  .profile-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;
+  }
+  @media (max-width: 700px) { .profile-grid { grid-template-columns: 1fr; } }
+
+  /* ── Type buttons ── */
+  .type-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .type-btn {
+    padding: 9px 6px; border-radius: 8px; border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .type-btn:hover { color: var(--text); }
+
+  .type-btn.ap { background: rgba(34,197,94,0.15);  color: #22c55e; border-color: rgba(34,197,94,0.3); }
+  .type-btn.an { background: rgba(124,95,240,0.15); color: #a78bfa; border-color: rgba(124,95,240,0.3); }
+  .type-btn.ah { background: rgba(239,68,68,0.15);  color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+  /* ── Events list ── */
+  .events-list {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    max-height: 340px; overflow-y: auto; padding-right: 2px;
+  }
+  .events-list::-webkit-scrollbar { width: 4px; }
+  .events-list::-webkit-scrollbar-track { background: transparent; }
+  .events-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .ev-card {
+    background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid transparent; transition: border-color 0.15s;
+  }
+  .ev-card:hover { border-color: var(--border2); }
+  .ev-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .ev-info { flex: 1; min-width: 0; }
+  .ev-name { font-size: 0.88rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .ev-age  { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .ev-del  {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 2px 4px; opacity: 0.5; flex-shrink: 0;
+    font-family: sans-serif; transition: opacity 0.15s, color 0.15s;
+  }
+  .ev-del:hover { opacity: 1; color: #ef4444; }
+
+  .events-empty { font-size: 0.82rem; color: var(--hint); font-style: italic; text-align: center; padding: 1.5rem 0; }
+
+  /* ── Lifeline canvas container ── */
+  .canvas-wrap {
+    width: 100%; max-width: 960px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem 1.25rem 0.75rem;
+    overflow-x: auto; margin: 1.25rem 0 0;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .canvas-wrap::-webkit-scrollbar { height: 5px; }
+  .canvas-wrap::-webkit-scrollbar-track { background: transparent; }
+  .canvas-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  #lifelineCanvas { display: block; }
+
+  /* ── Buttons ── */
+  .actions {
+    width: 100%; max-width: 960px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 1.25rem;
+  }
+  @media (max-width: 700px) { .actions { grid-template-columns: 1fr; } }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500;
+    padding: 0.85rem 1rem; border-radius: 14px; cursor: pointer;
+    border: 1px solid var(--border); transition: all 0.18s;
+  }
+  .btn-ghost  { background: var(--surface); color: var(--muted); }
+  .btn-ghost:hover  { background: var(--surface2); color: var(--text); }
+  .btn-purple { background: #7c5ff0; color: #fff; border-color: transparent; }
+  .btn-purple:hover { background: #6d50e0; transform: translateY(-1px); }
+
+  /* ── Spacer ── */
+  .gap { margin-top: 1.25rem; }
+
+  footer { margin-top: 2rem; font-size: 0.85rem; color: var(--hint); text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header-row">
+  <header>
+    <h1 id="txt-title">Lifeline</h1>
+    <p id="txt-subtitle">Map the story of your life</p>
+  </header>
+  <div class="controls">
+    <button class="pill-btn" onclick="toggleTheme()">
+      <span id="themeIcon">☀️</span><span id="themeLabel">Light</span>
+    </button>
+    <button class="pill-btn" onclick="toggleLang()">
+      🌐 <span id="langLabel">Español</span>
+    </button>
+  </div>
+</div>
+
+<!-- Profile Panel -->
+<div class="full">
+  <div class="panel">
+    <div class="panel-label" id="txt-profile-lbl">Your profile</div>
+    <div class="profile-grid">
+      <div class="field">
+        <label id="txt-name-lbl">Name</label>
+        <input type="text" id="profileName" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label id="txt-dob-lbl">Date of birth</label>
+        <input type="date" id="profileDob" onchange="dobChanged()">
+      </div>
+      <div class="field">
+        <label id="txt-age-lbl">Current age</label>
+        <input type="number" id="profileAge" min="1" max="120" placeholder="Age" oninput="ageChanged()">
+      </div>
+    </div>
+    <button class="btn btn-purple" onclick="saveProfile()" id="btn-save-profile">Save profile</button>
+  </div>
+</div>
+
+<!-- Lifeline Canvas -->
+<div class="canvas-wrap" id="canvasWrap">
+  <canvas id="lifelineCanvas"></canvas>
+</div>
+
+<!-- Add Event + Events List -->
+<div class="two-col gap">
+
+  <!-- Add Event -->
+  <div class="panel">
+    <div class="panel-label" id="txt-add-lbl">Add event</div>
+
+    <div class="field">
+      <label id="txt-desc-lbl">Description</label>
+      <input type="text" id="eventDesc" placeholder="What happened?">
+    </div>
+
+    <div class="field">
+      <label id="txt-event-age-lbl">Age <span id="ageDisplay">0</span></label>
+      <input type="range" min="0" max="100" step="1" value="0" id="eventAge" oninput="ageSliderChanged(this.value)">
+    </div>
+
+    <div class="field">
+      <label id="txt-type-lbl">Type</label>
+      <div class="type-group">
+        <button type="button" id="type-positive" class="type-btn" onclick="setType('positive')" id="txt-type-positive">Positive</button>
+        <button type="button" id="type-neutral"  class="type-btn an"  onclick="setType('neutral')"  id="txt-type-neutral">Neutral</button>
+        <button type="button" id="type-hard"     class="type-btn"     onclick="setType('hard')"     id="txt-type-hard">Challenging</button>
+      </div>
+    </div>
+
+    <button class="btn btn-purple gap" style="width:100%;margin-top:1rem" onclick="addEvent()" id="btn-add-event">Add to lifeline</button>
+  </div>
+
+  <!-- Events List -->
+  <div class="panel">
+    <div class="panel-label" id="txt-events-lbl">Events <span id="eventCount" style="font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+    <div class="events-list" id="eventsList">
+      <div class="events-empty" id="eventsEmpty">No events yet. Add your first one!</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button class="btn btn-ghost" onclick="doReset()" id="btn-reset">↺ Reset</button>
+  <button class="btn btn-purple" onclick="doDownloadPDF()" id="btn-download">Download PDF ↓</button>
+</div>
+
+<footer id="txt-footer">Made with love by Juanjo &amp; Vanessa &#10084;</footer>
+
+<script>
+/* ═══════════════════════════════════════
+   TRANSLATIONS
+═══════════════════════════════════════ */
+const LANGS = {
+  en: {
+    title:       'Lifeline',
+    subtitle:    'Map the story of your life',
+    profileLbl:  'Your profile',
+    nameLbl:     'Name',
+    dobLbl:      'Date of birth',
+    ageLbl:      'Current age',
+    savePro:     'Save profile',
+    addLbl:      'Add event',
+    descLbl:     'Description',
+    descPh:      'What happened?',
+    namePh:      'Your name',
+    agePh:       'Age',
+    eventAgeLbl: 'Age',
+    typeLbl:     'Type',
+    typePos:     'Positive',
+    typeNeu:     'Neutral',
+    typeHard:    'Challenging',
+    addBtn:      'Add to lifeline',
+    eventsLbl:   'Events',
+    noEvents:    'No events yet. Add your first one!',
+    reset:       '↺ Reset',
+    download:    'Download PDF ↓',
+    themeLight:  'Light',
+    themeDark:   'Dark',
+    langSwitch:  'Español',
+    footer:      'Made with love by Juanjo &amp; Vanessa &#10084;',
+    pdfTitle:    "'s Lifeline",
+    pdfAge:      'Age',
+    pdfBorn:     'Born',
+    pdfNow:      'Today',
+    pdfFooter:   'Made with love by Juanjo & Vanessa',
+    canvasHint:  'Save your profile to see your lifeline',
+    alertProfile:'Please save your profile first.',
+    alertDesc:   'Please enter an event description.',
+    ageLabel:    'Age',
+  },
+  es: {
+    title:       'Línea de Vida',
+    subtitle:    'Traza la historia de tu vida',
+    profileLbl:  'Tu perfil',
+    nameLbl:     'Nombre',
+    dobLbl:      'Fecha de nacimiento',
+    ageLbl:      'Edad actual',
+    savePro:     'Guardar perfil',
+    addLbl:      'Agregar evento',
+    descLbl:     'Descripción',
+    descPh:      '¿Qué ocurrió?',
+    namePh:      'Tu nombre',
+    agePh:       'Edad',
+    eventAgeLbl: 'Edad',
+    typeLbl:     'Tipo',
+    typePos:     'Positivo',
+    typeNeu:     'Neutral',
+    typeHard:    'Desafiante',
+    addBtn:      'Agregar a la línea',
+    eventsLbl:   'Eventos',
+    noEvents:    'Aún no hay eventos. ¡Agrega el primero!',
+    reset:       '↺ Reiniciar',
+    download:    'Descargar PDF ↓',
+    themeLight:  'Claro',
+    themeDark:   'Oscuro',
+    langSwitch:  'English',
+    footer:      'Hecho con amor por Juanjo &amp; Vanessa &#10084;',
+    pdfTitle:    ' — Línea de Vida',
+    pdfAge:      'Edad',
+    pdfBorn:     'Nacimiento',
+    pdfNow:      'Hoy',
+    pdfFooter:   'Hecho con amor por Juanjo & Vanessa',
+    canvasHint:  'Guarda tu perfil para ver tu línea de vida',
+    alertProfile:'Por favor guarda tu perfil primero.',
+    alertDesc:   'Por favor escribe una descripción del evento.',
+    ageLabel:    'Edad',
+  }
+};
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let profile = { name: '', dob: '', age: 0 };
+let events  = [];
+let nextId  = 1;
+let selectedType = 'neutral';
+let isDark  = true;
+let lang    = 'en';
+
+const EVENT_COLORS = { positive:'#22c55e', neutral:'#7c5ff0', hard:'#ef4444' };
+
+/* ═══════════════════════════════════════
+   THEME
+═══════════════════════════════════════ */
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  const t = LANGS[lang];
+  document.getElementById('themeLabel').textContent = isDark ? t.themeLight : t.themeDark;
+  document.getElementById('themeIcon').textContent  = isDark ? '☀️' : '🌙';
+  repaintSlider();
+  drawLifeline();
+}
+
+function themeColors() {
+  return {
+    bg:         isDark ? '#18181b' : '#ffffff',
+    linePurple: '#7c5ff0',
+    tick:       isDark ? '#3f3f46' : '#d4d4d4',
+    tickLbl:    isDark ? '#71717a' : '#a1a1aa',
+    yearLbl:    isDark ? '#52525b' : '#c4c4c4',
+    evtLbl:     isDark ? '#e4e4e7' : '#27272a',
+    name:       isDark ? '#f4f4f5' : '#18181b',
+    hint:       isDark ? '#3f3f46' : '#b4b4b4',
+    endDot:     '#7c5ff0',
+    pdfBg:      isDark ? [14,14,16]    : [248,247,244],
+    pdfText:    isDark ? [244,244,245] : [24,24,27],
+    pdfMuted:   [113,113,122],
+    pdfLabel:   isDark ? [210,210,215] : [50,50,60],
+    pdfRow:     isDark ? [28,28,32]    : [241,240,237],
+    pdfTrack:   isDark ? [45,45,50]    : [220,220,215],
+    pdfSep:     isDark ? [50,50,55]    : [200,200,195],
+    pdfFooter:  isDark ? [63,63,70]    : [160,160,160],
+  };
+}
+
+/* ═══════════════════════════════════════
+   LANGUAGE
+═══════════════════════════════════════ */
+function toggleLang() {
+  lang = lang === 'en' ? 'es' : 'en';
+  applyLang();
+}
+
+function applyLang() {
+  const t = LANGS[lang];
+  document.documentElement.lang = lang;
+  document.getElementById('txt-title').textContent         = t.title;
+  document.getElementById('txt-subtitle').textContent      = t.subtitle;
+  document.getElementById('txt-profile-lbl').textContent   = t.profileLbl;
+  document.getElementById('txt-name-lbl').textContent      = t.nameLbl;
+  document.getElementById('txt-dob-lbl').textContent       = t.dobLbl;
+  document.getElementById('txt-age-lbl').textContent       = t.ageLbl;
+  document.getElementById('btn-save-profile').textContent  = t.savePro;
+  document.getElementById('txt-add-lbl').textContent       = t.addLbl;
+  document.getElementById('txt-desc-lbl').textContent      = t.descLbl;
+  document.getElementById('eventDesc').placeholder         = t.descPh;
+  document.getElementById('profileName').placeholder       = t.namePh;
+  document.getElementById('profileAge').placeholder        = t.agePh;
+  document.getElementById('txt-event-age-lbl').childNodes[0].textContent = t.eventAgeLbl + ' ';
+  document.getElementById('txt-type-lbl').textContent      = t.typeLbl;
+  document.getElementById('type-positive').textContent     = t.typePos;
+  document.getElementById('type-neutral').textContent      = t.typeNeu;
+  document.getElementById('type-hard').textContent         = t.typeHard;
+  document.getElementById('btn-add-event').textContent     = t.addBtn;
+  document.getElementById('txt-events-lbl').childNodes[0].textContent = t.eventsLbl + ' ';
+  document.getElementById('btn-reset').textContent         = t.reset;
+  document.getElementById('btn-download').textContent      = t.download;
+  document.getElementById('langLabel').textContent         = t.langSwitch;
+  document.getElementById('themeLabel').textContent        = isDark ? t.themeLight : t.themeDark;
+  document.getElementById('txt-footer').innerHTML          = t.footer;
+  renderEventsList();
+  drawLifeline();
+}
+
+/* ═══════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════ */
+function dobChanged() {
+  const dob = document.getElementById('profileDob').value;
+  if (!dob) return;
+  const age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
+  if (age >= 0 && age <= 120) document.getElementById('profileAge').value = age;
+}
+
+function ageChanged() {
+  // manual age entry — clear DOB to avoid conflict
+  // (keep DOB if it matches)
+}
+
+function saveProfile() {
+  const name = document.getElementById('profileName').value.trim();
+  const dob  = document.getElementById('profileDob').value;
+  const age  = parseInt(document.getElementById('profileAge').value);
+
+  if (!name || !age || age < 1) return;
+  profile = { name, dob, age };
+
+  // Update event age slider max
+  const sl = document.getElementById('eventAge');
+  sl.max   = age;
+  if (parseInt(sl.value) > age) { sl.value = age; ageSliderChanged(age); }
+
+  drawLifeline();
+  renderEventsList();
+}
+
+/* ═══════════════════════════════════════
+   EVENT AGE SLIDER
+═══════════════════════════════════════ */
+function ageSliderChanged(val) {
+  document.getElementById('ageDisplay').textContent = val;
+  const color = EVENT_COLORS[selectedType] || '#7c5ff0';
+  paintAgeSlider(color);
+}
+
+function paintAgeSlider(color) {
+  const sl  = document.getElementById('eventAge');
+  const max = parseInt(sl.max) || 100;
+  const pct = (parseInt(sl.value) / max) * 100;
+  const empty = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  sl.style.background = `linear-gradient(to right,${color} 0%,${color} ${pct}%,${empty} ${pct}%,${empty} 100%)`;
+  const ex = document.getElementById('age-slider-thumb');
+  if (ex) ex.remove();
+  const s = document.createElement('style');
+  s.id = 'age-slider-thumb';
+  const border = isDark ? '#0e0e10' : '#f8f7f4';
+  s.textContent = `#eventAge::-webkit-slider-thumb{background:${color};box-shadow:0 0 8px ${color}99;border-color:${border}}#eventAge::-moz-range-thumb{background:${color};border-color:${border}}`;
+  document.head.appendChild(s);
+}
+
+function repaintSlider() {
+  paintAgeSlider(EVENT_COLORS[selectedType] || '#7c5ff0');
+}
+
+/* ═══════════════════════════════════════
+   EVENT TYPE
+═══════════════════════════════════════ */
+function setType(type) {
+  selectedType = type;
+  document.getElementById('type-positive').className = 'type-btn' + (type==='positive'?' ap':'');
+  document.getElementById('type-neutral').className  = 'type-btn' + (type==='neutral' ?' an':'');
+  document.getElementById('type-hard').className     = 'type-btn' + (type==='hard'    ?' ah':'');
+  paintAgeSlider(EVENT_COLORS[type]);
+}
+
+/* ═══════════════════════════════════════
+   ADD / DELETE EVENT
+═══════════════════════════════════════ */
+function addEvent() {
+  const t = LANGS[lang];
+  if (!profile.age) { alert(t.alertProfile); return; }
+  const desc = document.getElementById('eventDesc').value.trim();
+  if (!desc) { alert(t.alertDesc); return; }
+  const age = parseInt(document.getElementById('eventAge').value) || 0;
+  events.push({ id: nextId++, description: desc, age, type: selectedType });
+  events.sort((a,b) => a.age - b.age);
+  document.getElementById('eventDesc').value = '';
+  renderEventsList();
+  drawLifeline();
+}
+
+function deleteEvent(id) {
+  events = events.filter(e => e.id !== id);
+  renderEventsList();
+  drawLifeline();
+}
+
+function renderEventsList() {
+  const t   = LANGS[lang];
+  const el  = document.getElementById('eventsList');
+  const cnt = document.getElementById('eventCount');
+  cnt.textContent = events.length > 0 ? `(${events.length})` : '';
+
+  if (events.length === 0) {
+    el.innerHTML = `<div class="events-empty">${t.noEvents}</div>`;
+    return;
+  }
+
+  el.innerHTML = events.map(e => {
+    const color = EVENT_COLORS[e.type] || '#7c5ff0';
+    const typeLabel = t['type' + e.type.charAt(0).toUpperCase() + e.type.slice(1)] || e.type;
+    return `<div class="ev-card">
+      <span class="ev-dot" style="background:${color}"></span>
+      <div class="ev-info">
+        <div class="ev-name">${e.description}</div>
+        <div class="ev-age">${t.ageLabel} ${e.age} &middot; ${typeLabel}</div>
+      </div>
+      <button class="ev-del" onclick="deleteEvent(${e.id})" title="Delete">&#215;</button>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   DRAW LIFELINE (Canvas 2D)
+═══════════════════════════════════════ */
+function drawLifeline() {
+  const canvas = document.getElementById('lifelineCanvas');
+  const ctx    = canvas.getContext('2d');
+  const C      = themeColors();
+  const t      = LANGS[lang];
+
+  if (!profile.age || profile.age < 1) {
+    canvas.width  = 700;
+    canvas.height = 140;
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, 700, 140);
+    ctx.font      = '14px "DM Sans", sans-serif';
+    ctx.fillStyle = C.hint;
+    ctx.textAlign = 'center';
+    ctx.fillText(t.canvasHint, 350, 75);
+    return;
+  }
+
+  const PX      = 22;
+  const PAD_L   = 72;
+  const PAD_R   = 72;
+  const W       = Math.max(720, profile.age * PX + PAD_L + PAD_R);
+  const DOT_R   = 7;
+  const BASE_STEM = 50;
+  const LANE_H    = 58;   // extra height per overflow lane
+  const MAX_LANES = 6;
+  const LABEL_PAD = 9;    // horizontal padding around label text
+
+  function xAt(age) {
+    return PAD_L + (age / profile.age) * (W - PAD_L - PAD_R);
+  }
+
+  /* ── PASS 1: measure labels & assign collision-free slots ── */
+  // We need a temporary ctx for measurement before setting canvas size
+  // Use a small off-screen canvas for text measurement
+  const measure = document.createElement('canvas').getContext('2d');
+  measure.font  = '500 11px "DM Sans", sans-serif';
+
+  // Returns truncated label + pixel width
+  function measureLabel(desc) {
+    let label = desc;
+    const maxW = 110;
+    while (measure.measureText(label).width > maxW && label.length > 3) label = label.slice(0, -1);
+    if (label !== desc) label = label.trimEnd() + '…';
+    return { label, w: measure.measureText(label).width };
+  }
+
+  // Placed bounding boxes per side: { x1, x2, y1, y2 }
+  const placedAbove = [];
+  const placedBelow = [];
+
+  // For a given side and stem depth, compute the label rect
+  function labelBox(x, textW, stemLen, dir, LY) {
+    const labelY = LY + dir * (DOT_R + stemLen + 18);
+    const ageY   = labelY + dir * 15;
+    return {
+      x1: x - textW / 2 - LABEL_PAD,
+      x2: x + textW / 2 + LABEL_PAD,
+      y1: Math.min(labelY, ageY) - 14,
+      y2: Math.max(labelY, ageY) + 5,
+      labelY, ageY, stemLen
+    };
+  }
+
+  function overlaps(a, b) {
+    return !(a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2);
+  }
+
+  // Find the first free lane on `placed` side; returns box or null if > MAX_LANES
+  function findFreeSlot(placed, x, textW, dir, LY) {
+    for (let lane = 0; lane < MAX_LANES; lane++) {
+      const stem = BASE_STEM + lane * LANE_H;
+      const box  = labelBox(x, textW, stem, dir, LY);
+      if (!placed.some(b => overlaps(box, b))) {
+        placed.push(box);
+        return box;
+      }
+    }
+    // All lanes taken — force into last lane (better than crash)
+    const box = labelBox(x, textW, BASE_STEM + (MAX_LANES - 1) * LANE_H, dir, LY);
+    placed.push(box);
+    return box;
+  }
+
+  // Temporary LY for measurement (will confirm after we know canvas height)
+  // We use a dummy LY = 200 for the layout pass, then recompute with real LY
+  // Actually we need real LY, so we need canvas height first — chicken-and-egg.
+  // Solution: do the pass twice OR derive LY from maxStem.
+
+  // First pass with dummy LY to get max stems
+  const dummyLY    = 200;
+  const dummyAbove = [];
+  const dummyBelow = [];
+  const rawLayout  = events.map((evt, idx) => {
+    const x   = xAt(Math.min(evt.age, profile.age));
+    const { label, w } = measureLabel(evt.description);
+    const preferDir = idx % 2 === 0 ? -1 : 1;
+    const altDir    = -preferDir;
+    const pPlaced   = preferDir === -1 ? dummyAbove : dummyBelow;
+    const aPlaced   = altDir    === -1 ? dummyAbove : dummyBelow;
+
+    let box = findFreeSlot(pPlaced, x, w, preferDir, dummyLY);
+    // If this hit MAX_LANES, try alternate side
+    if (box.stemLen === BASE_STEM + (MAX_LANES - 1) * LANE_H) {
+      const tryAlt = findFreeSlot(aPlaced, x, w, altDir, dummyLY);
+      if (tryAlt.stemLen < box.stemLen) {
+        // remove the one we just pushed to pPlaced
+        pPlaced.pop();
+        box = { ...tryAlt, dir: altDir };
+        return { x, label, color: EVENT_COLORS[evt.type] || '#7c5ff0', ...box, dir: altDir };
+      }
+    }
+    return { x, label, color: EVENT_COLORS[evt.type] || '#7c5ff0', ...box, dir: preferDir };
+  });
+
+  // Find max stem above and below to size the canvas
+  let maxStemAbove = BASE_STEM;
+  let maxStemBelow = BASE_STEM;
+  rawLayout.forEach(l => {
+    if (l.dir === -1) maxStemAbove = Math.max(maxStemAbove, l.stemLen);
+    else              maxStemBelow = Math.max(maxStemBelow, l.stemLen);
+  });
+
+  const TOP_PAD    = 44;  // space for name + above labels
+  const ABOVE_ZONE = maxStemAbove + DOT_R + 24; // label top-to-line
+  const BELOW_ZONE = maxStemBelow + DOT_R + 30; // line-to-label bottom
+  const TICK_ZONE  = 40;  // ticks + endpoint labels below line
+  const H          = TOP_PAD + ABOVE_ZONE + Math.max(BELOW_ZONE, TICK_ZONE) + 20;
+  const LY         = TOP_PAD + ABOVE_ZONE;
+
+  canvas.width  = W;
+  canvas.height = H;
+
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* ── PASS 2: recompute layout with real LY ── */
+  const realAbove = [];
+  const realBelow = [];
+  const layout = events.map((evt, idx) => {
+    const x   = xAt(Math.min(evt.age, profile.age));
+    const { label, w } = measureLabel(evt.description);
+    const preferDir = idx % 2 === 0 ? -1 : 1;
+    const altDir    = -preferDir;
+    const pPlaced   = preferDir === -1 ? realAbove : realBelow;
+    const aPlaced   = altDir    === -1 ? realAbove : realBelow;
+
+    let box    = findFreeSlot(pPlaced, x, w, preferDir, LY);
+    let usedDir = preferDir;
+
+    if (box.stemLen === BASE_STEM + (MAX_LANES - 1) * LANE_H) {
+      const tryAlt = findFreeSlot(aPlaced, x, w, altDir, LY);
+      if (tryAlt.stemLen < box.stemLen) {
+        pPlaced.pop();
+        box     = tryAlt;
+        usedDir = altDir;
+      }
+    }
+    return { x, label, color: EVENT_COLORS[evt.type] || '#7c5ff0', age: evt.age, ...box, dir: usedDir };
+  });
+
+  /* ── Draw ── */
+
+  // Name banner
+  if (profile.name) {
+    ctx.font      = '500 14px "DM Sans", sans-serif';
+    ctx.fillStyle = C.name;
+    ctx.textAlign = 'left';
+    ctx.fillText(profile.name + t.pdfTitle, PAD_L, 22);
+  }
+
+  // Main line
+  ctx.strokeStyle = C.linePurple;
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, LY);
+  ctx.lineTo(W - PAD_R, LY);
+  ctx.stroke();
+
+  // Decade ticks
+  for (let age = 10; age < profile.age; age += 10) {
+    const x = xAt(age);
+    ctx.strokeStyle = C.tick;
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x, LY - 10);
+    ctx.lineTo(x, LY + 10);
+    ctx.stroke();
+    ctx.font      = '10px "DM Sans", sans-serif';
+    ctx.fillStyle = C.tickLbl;
+    ctx.textAlign = 'center';
+    ctx.fillText(age, x, LY + 24);
+  }
+
+  // Endpoints
+  drawEndpoint(ctx, xAt(0), LY, '0', profile.dob ? new Date(profile.dob).getFullYear() : null, t.pdfBorn, C, DOT_R);
+  const nowYear = profile.dob ? new Date().getFullYear() : null;
+  drawEndpoint(ctx, xAt(profile.age), LY, String(profile.age), nowYear, t.pdfNow, C, DOT_R);
+
+  // Events
+  layout.forEach(l => {
+    const { x, label, color, dir, stemLen, labelY, ageY, age } = l;
+
+    // Stem
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x, LY + dir * (DOT_R + 1));
+    ctx.lineTo(x, LY + dir * (DOT_R + stemLen));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dot
+    ctx.beginPath();
+    ctx.arc(x, LY, DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Glow ring
+    ctx.beginPath();
+    ctx.arc(x, LY, DOT_R + 4, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.5;
+    ctx.globalAlpha = 0.25;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Label text
+    ctx.font      = '500 11px "DM Sans", sans-serif';
+    ctx.fillStyle = C.evtLbl;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, labelY);
+
+    // Age sub-label
+    ctx.font      = '10px "DM Sans", sans-serif';
+    ctx.fillStyle = color;
+    ctx.fillText(t.ageLabel + ' ' + age, x, ageY);
+  });
+}
+
+function drawEndpoint(ctx, x, ly, topLabel, year, yearPrefix, C, r) {
+  // Terminal dot
+  ctx.beginPath();
+  ctx.arc(x, ly, r + 2, 0, Math.PI * 2);
+  ctx.fillStyle = C.endDot;
+  ctx.fill();
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(x, ly, r + 6, 0, Math.PI * 2);
+  ctx.strokeStyle = C.endDot;
+  ctx.lineWidth   = 1.5;
+  ctx.globalAlpha = 0.2;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Age label below line
+  ctx.font      = 'bold 11px "DM Sans", sans-serif';
+  ctx.fillStyle = C.tickLbl;
+  ctx.textAlign = 'center';
+  ctx.fillText(topLabel, x, ly + 24);
+
+  if (year) {
+    ctx.font      = '10px "DM Sans", sans-serif';
+    ctx.fillStyle = C.yearLbl;
+    ctx.fillText(year, x, ly + 37);
+  }
+}
+
+/* ═══════════════════════════════════════
+   RESET
+═══════════════════════════════════════ */
+function doReset() {
+  profile = { name:'', dob:'', age:0 };
+  events  = [];
+  nextId  = 1;
+  document.getElementById('profileName').value = '';
+  document.getElementById('profileDob').value  = '';
+  document.getElementById('profileAge').value  = '';
+  document.getElementById('eventDesc').value   = '';
+  document.getElementById('eventAge').value    = 0;
+  document.getElementById('ageDisplay').textContent = '0';
+  document.getElementById('eventAge').max = 100;
+  setType('neutral');
+  renderEventsList();
+  drawLifeline();
+}
+
+/* ═══════════════════════════════════════
+   PDF EXPORT (landscape A4 — fits lifeline)
+═══════════════════════════════════════ */
+function doDownloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const t = LANGS[lang];
+  const C = themeColors();
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const PW = 297, PH = 210, M = 15, CW = PW - M * 2;
+
+  // Background
+  doc.setFillColor(...C.pdfBg);
+  doc.rect(0, 0, PW, PH, 'F');
+
+  // Title
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(20);
+  doc.setTextColor(...C.pdfText);
+  const titleStr = profile.name ? profile.name + t.pdfTitle : t.title;
+  doc.text(titleStr, PW/2, 18, { align:'center' });
+
+  // Date
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...C.pdfMuted);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(lang==='es'?'es-ES':'en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let metaStr = dateStr;
+  if (profile.dob) {
+    const birthYear = new Date(profile.dob).getFullYear();
+    metaStr = (lang==='es' ? 'Nacido/a en ' : 'Born ') + birthYear + '  ·  ' + dateStr;
+  }
+  doc.text(metaStr, PW/2, 25, { align:'center' });
+
+  // Lifeline image from canvas
+  const canvas  = document.getElementById('lifelineCanvas');
+  const imgData = canvas.toDataURL('image/png');
+  const canvasAR = canvas.height / canvas.width;
+  const imgW  = CW;
+  const imgH  = Math.min(imgW * canvasAR, 90);
+  doc.addImage(imgData, 'PNG', M, 30, imgW, imgH);
+
+  let y = 30 + imgH + 10;
+
+  // Event list header
+  if (events.length > 0) {
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.pdfMuted);
+    const col1 = M, col2 = M + 16, col3 = M + 90, col4 = M + 120;
+    doc.text('#',            col1, y);
+    doc.text(t.ageLabel.toUpperCase(), col2, y);
+    doc.text(t.descLbl.toUpperCase(),  col3, y);
+    doc.text(t.typeLbl.toUpperCase(),  col4, y);
+
+    y += 3;
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(...C.pdfSep);
+    doc.line(M, y, M + CW, y);
+    y += 5;
+
+    const rowH = 8;
+    events.forEach((evt, i) => {
+      if (y > PH - 20) return; // don't overflow
+      const color = EVENT_COLORS[evt.type] || '#7c5ff0';
+      const cr = parseInt(color.slice(1,3),16);
+      const cg = parseInt(color.slice(3,5),16);
+      const cb = parseInt(color.slice(5,7),16);
+
+      if (i % 2 === 0) {
+        doc.setFillColor(...C.pdfRow);
+        doc.roundedRect(M - 2, y - 4, CW + 4, rowH, 1.5, 1.5, 'F');
+      }
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C.pdfLabel);
+      doc.text(String(i + 1), col1, y + 1.5);
+
+      doc.setTextColor(cr, cg, cb);
+      doc.text(String(evt.age), col2, y + 1.5);
+
+      doc.setTextColor(...C.pdfLabel);
+      const desc = evt.description.length > 55 ? evt.description.slice(0,53)+'…' : evt.description;
+      doc.text(desc, col3, y + 1.5);
+
+      const typeKey = 'type' + evt.type.charAt(0).toUpperCase() + evt.type.slice(1);
+      doc.setTextColor(cr, cg, cb);
+      doc.text(t[typeKey] || evt.type, col4, y + 1.5);
+
+      y += rowH;
+    });
+  }
+
+  // Footer
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...C.pdfFooter);
+  doc.text(t.pdfFooter, PW/2, PH - 8, { align:'center' });
+
+  doc.save('lifeline.pdf');
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+setType('neutral');
+paintAgeSlider(EVENT_COLORS['neutral']);
+document.getElementById('ageDisplay').textContent = '0';
+drawLifeline();
+</script>
+</body>
+</html>
