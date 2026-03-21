@@ -347,11 +347,25 @@
 
 <!-- Actions -->
 <div class="actions">
-  <button class="btn btn-ghost" onclick="doReset()" id="btn-reset">↺ Reset</button>
+  <button class="btn btn-ghost" onclick="openResetModal()" id="btn-reset">↺ Reset</button>
   <button class="btn btn-purple" onclick="doDownloadPDF()" id="btn-download">Download PDF ↓</button>
 </div>
 
 <footer id="txt-footer">Made with love by Juanjo &amp; Vanessa &#10084;</footer>
+
+<!-- Reset Confirmation Modal -->
+<div id="resetOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:1rem" onclick="closeResetModal(event)">
+  <div style="background:#1c1c20;border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:2rem;width:100%;max-width:380px;display:flex;flex-direction:column;gap:1.25rem">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.4rem;font-weight:400;color:#f4f4f5;margin-bottom:0.4rem" id="txt-reset-title">Reset everything?</div>
+      <div style="font-size:0.85rem;color:#71717a;line-height:1.6" id="txt-reset-body">This will erase your profile and all events. This action cannot be undone.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <button onclick="closeResetModal()" style="font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;padding:0.75rem;border-radius:10px;cursor:pointer;background:transparent;color:#71717a;border:1px solid rgba(255,255,255,0.08);transition:all 0.15s" onmouseover="this.style.background='#27272a';this.style.color='#f4f4f5'" onmouseout="this.style.background='transparent';this.style.color='#71717a'" id="txt-reset-cancel">Cancel</button>
+      <button onclick="confirmReset()" style="font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;padding:0.75rem;border-radius:10px;cursor:pointer;background:#ef4444;color:#fff;border:none;transition:all 0.15s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'" id="txt-reset-confirm">Yes, reset</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════
@@ -385,6 +399,10 @@ const LANGS = {
     themeDark:   'Dark',
     langSwitch:  'Español',
     footer:      'Made with love by Juanjo &amp; Vanessa &#10084;',
+    resetTitle:  'Reset everything?',
+    resetBody:   'This will erase your profile and all events. This action cannot be undone.',
+    resetCancel: 'Cancel',
+    resetConfirm:'Yes, reset',
     pdfTitle:    "'s Lifeline",
     pdfAge:      'Age',
     pdfBorn:     'Born',
@@ -422,6 +440,10 @@ const LANGS = {
     themeDark:   'Oscuro',
     langSwitch:  'English',
     footer:      'Hecho con amor por Juanjo &amp; Vanessa &#10084;',
+    resetTitle:  '¿Reiniciar todo?',
+    resetBody:   'Esto borrará tu perfil y todos los eventos. Esta acción no se puede deshacer.',
+    resetCancel: 'Cancelar',
+    resetConfirm:'Sí, reiniciar',
     pdfTitle:    ' — Línea de Vida',
     pdfAge:      'Edad',
     pdfBorn:     'Nacimiento',
@@ -689,8 +711,12 @@ function drawLifeline() {
   const t      = LANGS[lang];
 
   if (!profile.age || profile.age < 1) {
-    canvas.width  = 700;
-    canvas.height = 140;
+    const dpr0 = window.devicePixelRatio || 1;
+    canvas.width  = 700 * dpr0;
+    canvas.height = 140 * dpr0;
+    canvas.style.width  = '700px';
+    canvas.style.height = '140px';
+    ctx.scale(dpr0, dpr0);
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, 700, 140);
     ctx.font      = '14px "DM Sans", sans-serif';
@@ -805,15 +831,20 @@ function drawLifeline() {
     else              maxStemBelow = Math.max(maxStemBelow, l.stemLen);
   });
 
-  const TOP_PAD    = 44;  // space for name + above labels
+  const TOP_PAD    = 62;  // space for name + above labels
   const ABOVE_ZONE = maxStemAbove + DOT_R + 24; // label top-to-line
   const BELOW_ZONE = maxStemBelow + DOT_R + 30; // line-to-label bottom
   const TICK_ZONE  = 40;  // ticks + endpoint labels below line
   const H          = TOP_PAD + ABOVE_ZONE + Math.max(BELOW_ZONE, TICK_ZONE) + 20;
   const LY         = TOP_PAD + ABOVE_ZONE;
 
-  canvas.width  = W;
-  canvas.height = H;
+  // HiDPI / Retina sharpness
+  const DPR = window.devicePixelRatio || 1;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(DPR, DPR);
 
   ctx.fillStyle = C.bg;
   ctx.fillRect(0, 0, W, H);
@@ -884,11 +915,9 @@ function drawLifeline() {
   const nowYear = profile.dob ? new Date().getFullYear() : null;
   drawEndpoint(ctx, xAt(profile.age), LY, String(profile.age), nowYear, t.pdfNow, C, DOT_R);
 
-  // Events
+  // Events — Pass A: draw stems first (behind everything)
   layout.forEach(l => {
-    const { x, label, color, dir, stemLen, labelY, ageY, age } = l;
-
-    // Stem
+    const { x, label, color, dir, stemLen } = l;
     ctx.strokeStyle = color;
     ctx.lineWidth   = 1.5;
     ctx.setLineDash([4, 3]);
@@ -897,14 +926,16 @@ function drawLifeline() {
     ctx.lineTo(x, LY + dir * (DOT_R + stemLen));
     ctx.stroke();
     ctx.setLineDash([]);
+  });
 
-    // Dot
+  // Events — Pass B: dots on top of stems
+  layout.forEach(l => {
+    const { x, color } = l;
     ctx.beginPath();
     ctx.arc(x, LY, DOT_R, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Glow ring
     ctx.beginPath();
     ctx.arc(x, LY, DOT_R + 4, 0, Math.PI * 2);
     ctx.strokeStyle = color;
@@ -912,8 +943,27 @@ function drawLifeline() {
     ctx.globalAlpha = 0.25;
     ctx.stroke();
     ctx.globalAlpha = 1;
+  });
 
-    // Label text
+  // Events — Pass C: labels with bg mask so stem doesn't bleed through text
+  layout.forEach(l => {
+    const { x, label, color, dir, labelY, ageY, age } = l;
+
+    ctx.font = '500 11px "DM Sans", sans-serif';
+    const lw = ctx.measureText(label).width;
+    ctx.font = '10px "DM Sans", sans-serif';
+    const aw = ctx.measureText(t.ageLabel + ' ' + age).width;
+
+    const PAD_X = 5, PAD_Y = 3;
+    const boxW  = Math.max(lw, aw) + PAD_X * 2;
+
+    // Background rect to mask the dashed stem behind text
+    ctx.fillStyle = C.bg;
+    const top = Math.min(labelY, ageY) - 13;
+    const bot = Math.max(labelY, ageY) + PAD_Y + 2;
+    ctx.fillRect(x - boxW / 2, top, boxW, bot - top);
+
+    // Description label
     ctx.font      = '500 11px "DM Sans", sans-serif';
     ctx.fillStyle = C.evtLbl;
     ctx.textAlign = 'center';
@@ -958,6 +1008,26 @@ function drawEndpoint(ctx, x, ly, topLabel, year, yearPrefix, C, r) {
 /* ═══════════════════════════════════════
    RESET
 ═══════════════════════════════════════ */
+function openResetModal() {
+  const t = LANGS[lang];
+  document.getElementById('txt-reset-title').textContent   = t.resetTitle;
+  document.getElementById('txt-reset-body').textContent    = t.resetBody;
+  document.getElementById('txt-reset-cancel').textContent  = t.resetCancel;
+  document.getElementById('txt-reset-confirm').textContent = t.resetConfirm;
+  const ov = document.getElementById('resetOverlay');
+  ov.style.display = 'flex';
+}
+
+function closeResetModal(e) {
+  if (e && e.target !== document.getElementById('resetOverlay')) return;
+  document.getElementById('resetOverlay').style.display = 'none';
+}
+
+function confirmReset() {
+  document.getElementById('resetOverlay').style.display = 'none';
+  doReset();
+}
+
 function doReset() {
   profile = { name:'', dob:'', age:0 };
   events  = [];
@@ -970,6 +1040,7 @@ function doReset() {
   document.getElementById('ageDisplay').textContent = '0';
   document.getElementById('eventAge').max = 100;
   setType('neutral');
+  initDobSelects();
   renderEventsList();
   drawLifeline();
 }
