@@ -871,10 +871,10 @@ let reflectOpen  = false;
 function toggleTheme() {
   isDark = !isDark;
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  const t = LANGS[lang];
-  document.getElementById('themeIcon').textContent  = isDark ? '☀️' : '🌙';
   repaintSlider();
   drawLifeline();
+  updateSettingsValues();
+  updateWelcomeBanner();
 }
 
 function themeColors() {
@@ -909,7 +909,10 @@ function toggleLang() {
 
 function applyLang() {
   const t = LANGS[lang];
+  const isEN = lang === 'en';
   document.documentElement.lang = lang;
+
+  /* ── Main UI ── */
   document.getElementById('txt-title').textContent         = t.title;
   document.getElementById('txt-subtitle').textContent      = t.subtitle;
   document.getElementById('txt-profile-lbl').textContent   = t.profileLbl;
@@ -931,17 +934,63 @@ function applyLang() {
   document.getElementById('txt-events-lbl').childNodes[0].textContent = t.eventsLbl + ' ';
   document.getElementById('btn-reset').textContent         = t.reset;
   document.getElementById('btn-download').textContent      = t.download;
+  document.getElementById('btn-save-notify').innerHTML     = '&#10003; ' + (isEN ? 'Save &amp; notify' : 'Guardar y notificar');
   document.getElementById('txt-footer').innerHTML          = t.footer;
-  initDobSelects();
-  setInstructionsText();
   document.getElementById('txt-cat-lbl').textContent       = t.catLbl;
   document.getElementById('txt-note-optional').textContent = t.noteOptional;
   document.getElementById('txt-note-lbl').childNodes[0].nodeType===3 && (document.getElementById('txt-note-lbl').childNodes[0].textContent = t.noteLbl+' ');
   document.getElementById('eventNote').placeholder         = t.notePh;
   document.getElementById('txt-insights-lbl').textContent  = t.insightsLbl;
+  document.getElementById('txt-insights-hint') && (document.getElementById('txt-insights-hint').textContent = t.insightsHint);
   document.getElementById('txt-reflect-lbl').textContent   = t.reflectLbl;
-  if (expB) expB.textContent = (t.histExport || 'Export') + ' ↓';
-  if (impL) impL.childNodes[0].textContent = (t.histImport || 'Import') + ' ↑';
+
+  /* ── Events empty state ── */
+  const evEmpty = document.getElementById('eventsEmpty');
+  if (evEmpty) evEmpty.textContent = t.noEvents;
+
+  /* ── Note view label ── */
+  const noteTitleEl = document.getElementById('noteTitleEl');
+  if (noteTitleEl) noteTitleEl.textContent = t.noteViewLbl || (isEN ? 'Note' : 'Nota');
+
+  /* ── Reset modal ── */
+  const rTitle = document.getElementById('txt-reset-title');
+  if (rTitle) rTitle.textContent = t.resetTitle;
+  const rBody = document.getElementById('txt-reset-body');
+  if (rBody) rBody.textContent = t.resetBody;
+  const rCancel = document.getElementById('txt-reset-cancel');
+  if (rCancel) rCancel.textContent = t.resetCancel;
+  const rConfirm = document.getElementById('txt-reset-confirm');
+  if (rConfirm) rConfirm.textContent = t.resetConfirm;
+
+  /* ── Auth overlay ── */
+  const authSub = document.getElementById('authSubText');
+  if (authSub) authSub.textContent = isEN ? 'Enter your email to receive a sign-in link' : 'Introduce tu email para recibir un enlace de acceso';
+  const authBtn = document.getElementById('authBtn');
+  if (authBtn && authBtn.textContent !== (isEN ? 'Sending…' : 'Enviando…'))
+    authBtn.textContent = isEN ? 'Send magic link' : 'Enviar enlace de acceso';
+  const authPending = document.getElementById('authPending');
+  if (authPending) authPending.innerHTML = isEN
+    ? 'Your access is pending approval.<br>Please contact your practitioner to activate your account.'
+    : 'Tu acceso está pendiente de aprobación.<br>Contacta con tu especialista para activar tu cuenta.';
+  const rememberLabel = document.querySelector('label.auth-remember');
+  if (rememberLabel) {
+    const cb = rememberLabel.querySelector('input');
+    rememberLabel.innerHTML = '';
+    if (cb) rememberLabel.appendChild(cb);
+    rememberLabel.appendChild(document.createTextNode(' ' + (isEN ? 'Keep me logged in on this device' : 'Mantener sesión iniciada en este dispositivo')));
+  }
+
+  /* ── Bio modal (if open) ── */
+  const bioModal = document.getElementById('bioModal');
+  if (bioModal && bioModal.classList.contains('open')) openBioModal();
+
+  /* ── Welcome + settings ── */
+  updateWelcomeBanner();
+  updateSettingsValues();
+
+  /* ── Dynamic renders ── */
+  initDobSelects();
+  setInstructionsText();
   renderCatButtons();
   renderFilterBar();
   renderEventsList();
