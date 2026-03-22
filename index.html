@@ -454,6 +454,10 @@
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6" id="txt-history-intro"></p>
       <div id="historyBody"></div>
       <button class="btn btn-purple" style="width:100%;margin-top:1rem" id="btn-save-snap" onclick="saveSnapshot()">Save snapshot</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.75rem">
+        <button class="btn btn-ghost" id="btn-hist-export" onclick="exportHistory()">Export ↓</button>
+        <label class="btn btn-ghost" style="cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center" id="btn-hist-import">Import ↑<input type="file" accept=".json" style="display:none" onchange="importHistory(this)"></label>
+      </div>
     </div>
   </div>
 </div>
@@ -564,12 +568,16 @@ const LANGS = {
     totalTitle:  'Total events',
     reflectLbl:  'Reflection questions',
     historyLbl:  'History',
-    historyIntro:'Your snapshots are saved privately in this browser — no data is ever sent online or stored on any server. This tool is fully privacy-focused.\n\n⚠️ Important: clearing your browser cache or data will permanently erase your history. Download your PDF regularly to keep a personal record.',
+    historyIntro:'Your snapshots are saved privately in this browser — no data is ever sent online or stored on any server. This tool is fully privacy-focused: your reflections stay on your device only.\n\n⚠️ Important: clearing your browser cache will erase your history. Use Export to save a backup file you can re-import any time.\n\n📱 Safari / Apple devices: Safari private mode blocks local storage. Always Export your history — save the file to Files, iCloud Drive, or email it to yourself.',
     histSave:    'Save snapshot',
     histLoad:    'Load',
     histDel:     'Delete',
     histCompare: 'Compare',
     histEmpty:   'No snapshots saved yet. Save your first one after adding events.',
+    histExport:  'Export backup',
+    histImport:  'Import backup',
+    histImportOk:'Snapshots imported successfully.',
+    histImportErr:'Could not read the file. Please use a backup exported from this app.',
     compareLbl:  'Compare snapshots',
     compareA:    'Snapshot',
     compareB:    'Current',
@@ -638,12 +646,16 @@ const LANGS = {
     totalTitle:  'Total de eventos',
     reflectLbl:  'Preguntas de reflexión',
     historyLbl:  'Historial',
-    historyIntro:'Tus instantáneas se guardan de forma privada en este navegador — ningún dato se envía a internet. Esta herramienta es completamente privada.\n\n⚠️ Importante: borrar la caché de tu navegador eliminará permanentemente tu historial. Descarga tu PDF regularmente para conservar un registro personal.',
+    historyIntro:'Tus instantáneas se guardan de forma privada en este navegador — ningún dato se envía a internet ni se almacena en servidores. Esta herramienta es completamente privada.\n\n⚠️ Importante: borrar la caché del navegador eliminará tu historial. Usa Exportar para guardar una copia que puedas reimportar cuando quieras.\n\n📱 Safari / dispositivos Apple: el modo privado de Safari bloquea el almacenamiento local. Usa siempre Exportar — guarda el archivo en Archivos, iCloud Drive o envíatelo por correo.',
     histSave:    'Guardar instantánea',
     histLoad:    'Cargar',
     histDel:     'Eliminar',
     histCompare: 'Comparar',
     histEmpty:   'Aún no hay instantáneas. Guarda la primera después de agregar eventos.',
+    histExport:  'Exportar copia',
+    histImport:  'Importar copia',
+    histImportOk:'Instantáneas importadas correctamente.',
+    histImportErr:'No se pudo leer el archivo. Usa una copia exportada desde esta aplicación.',
     compareLbl:  'Comparar instantáneas',
     compareA:    'Instantánea',
     compareB:    'Actual',
@@ -756,6 +768,10 @@ function applyLang() {
   document.getElementById('txt-history-lbl').textContent   = t.historyLbl;
   document.getElementById('txt-history-intro').innerHTML   = t.historyIntro.replace(/\n\n/g,'<br><br>').replace(/⚠️/g,'<span style="color:#eab308">⚠️</span>');
   document.getElementById('btn-save-snap').textContent     = t.histSave;
+  const expB = document.getElementById('btn-hist-export');
+  if (expB) expB.textContent = (t.histExport || 'Export') + ' ↓';
+  const impL = document.getElementById('btn-hist-import');
+  if (impL) impL.childNodes[0].textContent = (t.histImport || 'Import') + ' ↑';
   renderCatButtons();
   renderFilterBar();
   renderEventsList();
@@ -1721,8 +1737,14 @@ function renderHistory() {
   const t    = LANGS[lang];
   const body = document.getElementById('historyBody');
   document.getElementById('txt-history-intro').innerHTML = t.historyIntro
-    .replace(/\n\n/g,'<br><br>').replace(/⚠️/g,'<span style="color:#eab308">⚠️</span>');
-  document.getElementById('btn-save-snap').textContent = t.histSave;
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/⚠️/g,'<span style="color:#eab308">⚠️</span>')
+    .replace(/📱/g,'<span>📱</span>');
+  document.getElementById('btn-save-snap').textContent   = t.histSave;
+  const expBtn = document.getElementById('btn-hist-export');
+  if (expBtn) expBtn.textContent = (t.histExport || 'Export') + ' ↓';
+  const impLbl = document.getElementById('btn-hist-import');
+  if (impLbl) impLbl.childNodes[0].textContent = (t.histImport || 'Import') + ' ↑';
   const h = loadHistory();
   if (h.length === 0) {
     body.innerHTML = `<div style="font-size:0.85rem;color:var(--hint);font-style:italic">${t.histEmpty}</div>`;
