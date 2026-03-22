@@ -345,6 +345,8 @@
   .auth-btn:hover { background:#6d50e0; }
   .auth-btn:disabled { opacity:0.55; cursor:not-allowed; }
   .auth-msg { font-size:0.85rem; text-align:center; line-height:1.6; }
+  .auth-remember { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--muted); user-select:none; align-self:flex-start; }
+  .auth-remember input[type="checkbox"] { width:16px; height:16px; accent-color:#7c5ff0; cursor:pointer; }
   .auth-pending { background:var(--surface2); border:1px solid var(--border2); border-radius:12px; padding:1.25rem; text-align:center; font-size:0.88rem; color:var(--muted); line-height:1.6; }
   .user-bar { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--muted); }
   .user-bar span { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -364,6 +366,10 @@
     <div id="authLoginForm" style="display:flex;flex-direction:column;align-items:center;gap:1rem;width:100%">
       <div class="auth-sub" id="authSubText">Enter your email to receive a sign-in link</div>
       <input type="email" id="authEmail" class="auth-input" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+      <label class="auth-remember">
+        <input type="checkbox" id="rememberMe" checked>
+        Keep me logged in on this device
+      </label>
       <button class="auth-btn" id="authBtn" onclick="sendMagicLink()">Send magic link</button>
       <div class="auth-msg" id="authMsg"></div>
     </div>
@@ -560,6 +566,7 @@
 <div class="actions">
   <button class="btn btn-ghost" onclick="openResetModal()" id="btn-reset">↺ Reset</button>
   <button class="btn btn-purple" onclick="doDownloadPDF()" id="btn-download">Download PDF ↓</button>
+  <button class="btn btn-complete" id="btn-save-notify" onclick="saveAndNotify()">&#10003; Save &amp; notify</button>
 </div>
 
 <footer>
@@ -609,6 +616,7 @@ const LANGS = {
     noEvents:    'No events yet. Add your first one!',
     reset:       '↺ Reset',
     download:    'Download PDF ↓',
+    saveNotify:  'Save & notify',
     themeLight:  'Light',
     themeDark:   'Dark',
     langSwitch:  'Español',
@@ -687,6 +695,7 @@ const LANGS = {
     noEvents:    'Aún no hay eventos. ¡Agrega el primero!',
     reset:       '↺ Reiniciar',
     download:    'Descargar PDF ↓',
+    saveNotify:  'Guardar y notificar',
     themeLight:  'Claro',
     themeDark:   'Oscuro',
     langSwitch:  'English',
@@ -1928,7 +1937,7 @@ function setInstructionsText() {
 ════════════════════════════════════════ */
 const SUPA_URL = 'https://hsxzyzlvilewwxzjxeac.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzeHp5emx2aWxld3d4emp4ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODkyOTksImV4cCI6MjA4OTc2NTI5OX0.v_9oaDBs4qOKW2cnx9SaUA_14QYtlr5TUBVhDHJ1yl8';
-const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+const db = window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, storageKey: 'cafi-auth', autoRefreshToken: true, detectSessionInUrl: true } });
 let currentUser = null;
 let userProfile = null;
 
@@ -1939,9 +1948,10 @@ async function sendMagicLink() {
   const msg = document.getElementById('authMsg');
   btn.disabled = true;
   btn.textContent = lang === 'es' ? 'Enviando…' : 'Sending…';
+  const rememberEl = document.getElementById('rememberMe');
   const { error } = await db.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.href.split('#')[0] }
+    options: { emailRedirectTo: 'https://juanjocassinelli.github.io/lifeline/' }
   });
   if (error) {
     msg.style.color = '#ef4444';
@@ -1987,6 +1997,49 @@ async function authSignOut() {
   await db.auth.signOut();
   const ub = document.getElementById('userBar');
   if (ub) ub.style.display = 'none';
+}
+
+
+async function saveAndNotify() {
+  if (!currentUser) {
+    alert(lang === 'es' ? 'Inicia sesión primero.' : 'Please sign in first.');
+    return;
+  }
+  const btn = document.getElementById('btn-save-notify');
+  btn.disabled = true;
+  btn.textContent = lang === 'es' ? 'Guardando…' : 'Saving…';
+
+  // Save snapshot first
+  await saveSnapshot();
+
+  // Wait briefly for cloudId to be set
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Now mark complete and notify
+  const h = loadHistory();
+  if (h.length === 0 || !h[0].cloudId) {
+    btn.disabled = false;
+    btn.innerHTML = '&#10003; Save &amp; notify';
+    alert(lang === 'es' ? 'Error al guardar. Inténtalo de nuevo.' : 'Error saving. Please try again.');
+    return;
+  }
+  const latest = h[0];
+  await db.from('lifeline_snapshots').update({ completed: true }).eq('id', latest.cloudId);
+  await db.from('notifications').insert({
+    user_id: currentUser.id,
+    type: 'lifeline',
+    snapshot_id: latest.cloudId,
+  });
+  latest.completed = true;
+  h[0] = latest;
+  saveHistoryData(h);
+  if (historyOpen) renderHistory();
+
+  btn.disabled = false;
+  btn.innerHTML = '&#10003; Save &amp; notify';
+  alert(lang === 'es'
+    ? '✓ ¡Guardado y notificado! Tu especialista ha sido avisado.'
+    : '✓ Saved and notified! Your practitioner has been alerted.');
 }
 
 async function markComplete() {
