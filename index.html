@@ -238,6 +238,68 @@
   .btn-purple { background: #7c5ff0; color: #fff; border-color: transparent; }
   .btn-purple:hover { background: #6d50e0; transform: translateY(-1px); }
 
+
+  /* ── Categories ── */
+  .cat-group { display:flex; flex-wrap:wrap; gap:6px; }
+  .cat-btn {
+    padding:5px 11px; border-radius:20px; border:1px solid var(--border2);
+    background:var(--surface2); color:var(--muted); font-family:'DM Sans',sans-serif;
+    font-size:0.78rem; font-weight:500; cursor:pointer; transition:all 0.15s;
+  }
+  .cat-btn.active { color:#fff; border-color:transparent; }
+  .cat-filter-bar { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0.75rem; }
+  .cat-filter-btn {
+    padding:4px 11px; border-radius:20px; border:1px solid var(--border2);
+    background:var(--surface2); color:var(--muted); font-family:'DM Sans',sans-serif;
+    font-size:0.75rem; font-weight:500; cursor:pointer; transition:all 0.15s;
+  }
+  .cat-filter-btn.on { color:#fff; border-color:transparent; }
+
+  /* ── Note textarea ── */
+  textarea.note-input {
+    background:var(--surface2); border:1px solid var(--border2); border-radius:10px;
+    padding:10px 14px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:0.88rem; outline:none; width:100%; resize:vertical; min-height:72px;
+    transition:border-color 0.15s, background 0.3s; line-height:1.55;
+  }
+  textarea.note-input:focus { border-color:rgba(124,95,240,0.5); }
+  textarea.note-input::placeholder { color:var(--hint); }
+
+  /* ── Event card upgrade ── */
+  .ev-cat { font-size:0.7rem; font-weight:500; padding:2px 7px; border-radius:10px; display:inline-block; margin-top:3px; }
+  .ev-note-snippet { font-size:0.75rem; color:var(--muted); margin-top:3px; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+  .ev-note-btn { background:none; border:1px solid var(--border2); border-radius:7px; color:var(--muted); cursor:pointer; font-size:0.7rem; padding:3px 8px; flex-shrink:0; transition:all 0.15s; }
+  .ev-note-btn:hover { color:var(--text); border-color:var(--border); }
+
+  /* ── Insights card ── */
+  .insight-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media(max-width:600px){ .insight-grid { grid-template-columns:1fr; } }
+  .insight-card { background:var(--surface2); border-radius:12px; padding:1rem 1.25rem; }
+  .insight-badge { font-size:1.5rem; margin-bottom:0.5rem; }
+  .insight-title { font-size:0.78rem; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+  .insight-value { font-size:1.05rem; font-weight:500; color:var(--text); line-height:1.4; }
+  .insight-sub { font-size:0.78rem; color:var(--muted); margin-top:3px; }
+
+  /* ── Reflection questions ── */
+  .reflect-q { font-size:0.85rem; color:var(--muted); padding:9px 12px 9px 14px; border-left:2px solid; border-radius:0 8px 8px 0; background:var(--surface2); margin-bottom:0.5rem; line-height:1.55; }
+  .reflect-q:last-child { margin-bottom:0; }
+
+  /* ── History ── */
+  .hist-entry { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface2); border-radius:10px; margin-bottom:0.5rem; }
+  .hist-entry:last-child { margin-bottom:0; }
+  .hist-date { flex:1; font-size:0.85rem; color:var(--text); font-weight:500; }
+  .hist-count { font-size:0.78rem; color:var(--muted); }
+  .hist-btns { display:flex; gap:6px; }
+  .hist-btn { font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:500; padding:5px 10px; border-radius:7px; cursor:pointer; border:1px solid var(--border2); background:var(--surface3); color:var(--muted); transition:all 0.15s; }
+  .hist-btn:hover { background:var(--surface); color:var(--text); }
+  .hist-btn.danger:hover { background:#3f1212; color:#ef4444; border-color:#ef444444; }
+
+  /* ── Note modal & compare modal inner ── */
+  .modal-inner { background:#1c1c20; border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:1.75rem; width:100%; max-width:480px; display:flex; flex-direction:column; gap:1rem; }
+  .modal-title { font-family:'DM Serif Display',serif; font-size:1.3rem; font-weight:400; color:#f4f4f5; }
+  .modal-close { background:none; border:none; color:#71717a; font-size:1.4rem; cursor:pointer; line-height:1; padding:2px 6px; }
+  .modal-close:hover { color:#f4f4f5; }
+
   /* ── Spacer ── */
   .gap { margin-top: 1.25rem; }
 
@@ -332,6 +394,16 @@
       </div>
     </div>
 
+    <div class="field">
+      <label id="txt-cat-lbl">Category</label>
+      <div class="cat-group" id="catGroup"></div>
+    </div>
+
+    <div class="field">
+      <label id="txt-note-lbl">Note <span style="font-weight:400;color:var(--hint)" id="txt-note-optional">(optional)</span></label>
+      <textarea class="note-input" id="eventNote" rows="2" placeholder="Add a private reflection or context…"></textarea>
+    </div>
+
     <button class="btn btn-purple gap" style="width:100%;margin-top:1rem" onclick="addEvent()" id="btn-add-event">Add to lifeline</button>
   </div>
 
@@ -343,6 +415,69 @@
     </div>
   </div>
 
+</div>
+
+<!-- Category filter bar (above canvas, shown when events have categories) -->
+<div style="width:100%;max-width:960px;margin-top:1rem" id="filterBarWrap" style="display:none">
+  <div class="cat-filter-bar" id="filterBar"></div>
+</div>
+
+<!-- Insights Card -->
+<div style="width:100%;max-width:960px;margin-top:1.25rem" id="insightsWrap">
+  <div class="panel">
+    <div class="panel-label" id="txt-insights-lbl">Your story at a glance</div>
+    <div id="insightsBody"><div style="font-size:0.85rem;color:var(--hint);font-style:italic" id="txt-insights-hint">Add events to see insights about your lifeline.</div></div>
+  </div>
+</div>
+
+<!-- Reflection Panel -->
+<div style="width:100%;max-width:960px;margin-top:1.25rem">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReflect()">
+      <div class="panel-label" style="margin-bottom:0" id="txt-reflect-lbl">Reflection questions</div>
+      <span id="reflectChevron" style="color:var(--muted);font-size:1.1rem;transition:transform 0.25s;display:inline-block">▾</span>
+    </div>
+    <div id="reflectContent" style="margin-top:1rem;display:none">
+      <div id="reflectBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- History Panel -->
+<div style="width:100%;max-width:960px;margin-top:1.25rem">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleHistory()">
+      <div class="panel-label" style="margin-bottom:0" id="txt-history-lbl">History</div>
+      <span id="historyChevron" style="color:var(--muted);font-size:1.1rem;transition:transform 0.25s;display:inline-block">▾</span>
+    </div>
+    <div id="historyContent" style="margin-top:1rem;display:none">
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6" id="txt-history-intro"></p>
+      <div id="historyBody"></div>
+      <button class="btn btn-purple" style="width:100%;margin-top:1rem" id="btn-save-snap" onclick="saveSnapshot()">Save snapshot</button>
+    </div>
+  </div>
+</div>
+
+<!-- Note Modal -->
+<div id="noteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:1rem" onclick="closeNoteModal(event)">
+  <div class="modal-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="modal-title" id="noteTitleEl">Note</div>
+      <button class="modal-close" onclick="closeNoteModal()">&#215;</button>
+    </div>
+    <div id="noteBodyEl" style="font-size:0.9rem;color:#a1a1aa;line-height:1.65;white-space:pre-wrap"></div>
+  </div>
+</div>
+
+<!-- Compare Modal -->
+<div id="compareOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="closeCompare(event)">
+  <div class="modal-inner" style="max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="modal-title" id="txt-compare-title">Compare</div>
+      <button class="modal-close" onclick="closeCompare()">&#215;</button>
+    </div>
+    <div id="compareBody"></div>
+  </div>
 </div>
 
 <!-- Actions -->
@@ -412,6 +547,39 @@ const LANGS = {
     alertProfile:'Please save your profile first.',
     alertDesc:   'Please enter an event description.',
     ageLabel:    'Age',
+    catLbl:      'Category',
+    noteOptional:'(optional)',
+    noteLbl:     'Note',
+    notePh:      'Add a private reflection or context…',
+    cats:        ['Career','Family','Health','Relationships','Growth','Other'],
+    catAll:      'All',
+    insightsLbl: 'Your story at a glance',
+    insightsHint:'Add events to see insights about your lifeline.',
+    peakTitle:   'Strongest period',
+    valleyTitle: 'Most challenging period',
+    peakNone:    'Add more positive events to detect a peak.',
+    valleyNone:  'No notable challenging periods detected.',
+    peakUnit:    'around age',
+    balanceTitle:'Balance',
+    totalTitle:  'Total events',
+    reflectLbl:  'Reflection questions',
+    historyLbl:  'History',
+    historyIntro:'Your snapshots are saved privately in this browser — no data is ever sent online or stored on any server. This tool is fully privacy-focused.\n\n⚠️ Important: clearing your browser cache or data will permanently erase your history. Download your PDF regularly to keep a personal record.',
+    histSave:    'Save snapshot',
+    histLoad:    'Load',
+    histDel:     'Delete',
+    histCompare: 'Compare',
+    histEmpty:   'No snapshots saved yet. Save your first one after adding events.',
+    compareLbl:  'Compare snapshots',
+    compareA:    'Snapshot',
+    compareB:    'Current',
+    noteViewLbl: 'Note',
+    reflectQs: {
+      manyPositive: ['What patterns do you notice in your best moments?','What conditions helped create your happiest periods?','How can you recreate more of those moments today?'],
+      manyChallenging: ['What strengths helped you get through your most difficult times?','What did you learn from your hardest experiences?','Is there a challenging period you have not fully processed yet?'],
+      mixed: ['What is the relationship between your highs and lows?','Do your challenging events tend to cluster around certain life areas?','Which event on your timeline had the biggest impact on who you are today?'],
+      few: ['What events are missing from your timeline that shaped you?','Are there events you find difficult to add — and what does that tell you?','If you could go back to one moment on your line, which would it be?'],
+    },
   },
   es: {
     title:       'Línea de Vida',
@@ -453,6 +621,39 @@ const LANGS = {
     alertProfile:'Por favor guarda tu perfil primero.',
     alertDesc:   'Por favor escribe una descripción del evento.',
     ageLabel:    'Edad',
+    catLbl:      'Categoría',
+    noteOptional:'(opcional)',
+    noteLbl:     'Nota',
+    notePh:      'Añade una reflexión o contexto privado…',
+    cats:        ['Carrera','Familia','Salud','Relaciones','Crecimiento','Otro'],
+    catAll:      'Todos',
+    insightsLbl: 'Tu historia de un vistazo',
+    insightsHint:'Agrega eventos para ver los análisis de tu línea de vida.',
+    peakTitle:   'Período más positivo',
+    valleyTitle: 'Período más desafiante',
+    peakNone:    'Agrega más eventos positivos para detectar un período cumbre.',
+    valleyNone:  'No se detectaron períodos desafiantes notables.',
+    peakUnit:    'alrededor de los',
+    balanceTitle:'Equilibrio',
+    totalTitle:  'Total de eventos',
+    reflectLbl:  'Preguntas de reflexión',
+    historyLbl:  'Historial',
+    historyIntro:'Tus instantáneas se guardan de forma privada en este navegador — ningún dato se envía a internet. Esta herramienta es completamente privada.\n\n⚠️ Importante: borrar la caché de tu navegador eliminará permanentemente tu historial. Descarga tu PDF regularmente para conservar un registro personal.',
+    histSave:    'Guardar instantánea',
+    histLoad:    'Cargar',
+    histDel:     'Eliminar',
+    histCompare: 'Comparar',
+    histEmpty:   'Aún no hay instantáneas. Guarda la primera después de agregar eventos.',
+    compareLbl:  'Comparar instantáneas',
+    compareA:    'Instantánea',
+    compareB:    'Actual',
+    noteViewLbl: 'Nota',
+    reflectQs: {
+      manyPositive: ['¿Qué patrones notas en tus mejores momentos?','¿Qué condiciones ayudaron a crear tus períodos más felices?','¿Cómo puedes recrear más de esos momentos hoy?'],
+      manyChallenging: ['¿Qué fortalezas te ayudaron a superar tus momentos más difíciles?','¿Qué aprendiste de tus experiencias más duras?','¿Hay algún período difícil que aún no hayas procesado del todo?'],
+      mixed: ['¿Cuál es la relación entre tus momentos altos y bajos?','¿Tus eventos desafiantes tienden a agruparse en ciertas áreas de vida?','¿Qué evento de tu línea tuvo el mayor impacto en quien eres hoy?'],
+      few: ['¿Qué eventos faltan en tu línea que te hayan marcado?','¿Hay eventos que te resulta difícil agregar — y qué dice eso de ti?','Si pudieras volver a un momento de tu línea, ¿cuál sería?'],
+    },
   }
 };
 
@@ -467,6 +668,12 @@ let isDark  = true;
 let lang    = 'en';
 
 const EVENT_COLORS = { positive:'#22c55e', neutral:'#7c5ff0', hard:'#ef4444' };
+const CAT_COLORS   = { Career:'#378ADD', Family:'#D4537E', Health:'#22c55e', Relationships:'#a78bfa', Growth:'#eab308', Other:'#71717a',
+                        Carrera:'#378ADD', Familia:'#D4537E', Salud:'#22c55e', Relaciones:'#a78bfa', Crecimiento:'#eab308', Otro:'#71717a' };
+let selectedCat  = '';
+let filterCat    = '';
+let reflectOpen  = false;
+let historyOpen  = false;
 
 /* ═══════════════════════════════════════
    THEME
@@ -540,8 +747,22 @@ function applyLang() {
   document.getElementById('txt-footer').innerHTML          = t.footer;
   initDobSelects();
   setInstructionsText();
+  document.getElementById('txt-cat-lbl').textContent       = t.catLbl;
+  document.getElementById('txt-note-optional').textContent = t.noteOptional;
+  document.getElementById('txt-note-lbl').childNodes[0].nodeType===3 && (document.getElementById('txt-note-lbl').childNodes[0].textContent = t.noteLbl+' ');
+  document.getElementById('eventNote').placeholder         = t.notePh;
+  document.getElementById('txt-insights-lbl').textContent  = t.insightsLbl;
+  document.getElementById('txt-reflect-lbl').textContent   = t.reflectLbl;
+  document.getElementById('txt-history-lbl').textContent   = t.historyLbl;
+  document.getElementById('txt-history-intro').innerHTML   = t.historyIntro.replace(/\n\n/g,'<br><br>').replace(/⚠️/g,'<span style="color:#eab308">⚠️</span>');
+  document.getElementById('btn-save-snap').textContent     = t.histSave;
+  renderCatButtons();
+  renderFilterBar();
   renderEventsList();
   drawLifeline();
+  refreshInsights();
+  if (reflectOpen) renderReflect();
+  if (historyOpen) renderHistory();
 }
 
 /* ═══════════════════════════════════════
@@ -663,17 +884,25 @@ function addEvent() {
   const desc = document.getElementById('eventDesc').value.trim();
   if (!desc) { alert(t.alertDesc); return; }
   const age = parseInt(document.getElementById('eventAge').value) || 0;
-  events.push({ id: nextId++, description: desc, age, type: selectedType });
+  const note = document.getElementById('eventNote').value.trim();
+  events.push({ id: nextId++, description: desc, age, type: selectedType, category: selectedCat, note });
   events.sort((a,b) => a.age - b.age);
   document.getElementById('eventDesc').value = '';
+  document.getElementById('eventNote').value = '';
   renderEventsList();
   drawLifeline();
+  refreshInsights();
+  if (reflectOpen) renderReflect();
+  renderFilterBar();
 }
 
 function deleteEvent(id) {
   events = events.filter(e => e.id !== id);
   renderEventsList();
   drawLifeline();
+  refreshInsights();
+  if (reflectOpen) renderReflect();
+  renderFilterBar();
 }
 
 function renderEventsList() {
@@ -687,15 +916,33 @@ function renderEventsList() {
     return;
   }
 
-  el.innerHTML = events.map(e => {
-    const color = EVENT_COLORS[e.type] || '#7c5ff0';
+  const visibleEvents = filterCat
+    ? events.filter(e => e.category === filterCat)
+    : events;
+
+  if (visibleEvents.length === 0 && filterCat) {
+    el.innerHTML = `<div class="events-empty" style="font-style:italic;color:var(--hint)">${lang==='es'?'No hay eventos en esta categoría.':'No events in this category.'}</div>`;
+    return;
+  }
+
+  el.innerHTML = visibleEvents.map(e => {
+    const color    = EVENT_COLORS[e.type] || '#7c5ff0';
     const typeLabel = t['type' + e.type.charAt(0).toUpperCase() + e.type.slice(1)] || e.type;
+    const catColor  = e.category ? (CAT_COLORS[e.category] || '#71717a') : null;
+    const catBadge  = e.category
+      ? `<span class="ev-cat" style="background:${catColor}22;color:${catColor}">${e.category}</span>` : '';
+    const noteSnip  = e.note
+      ? `<div class="ev-note-snippet">${e.note}</div>` : '';
+    const noteBtn   = e.note
+      ? `<button class="ev-note-btn" onclick="openNoteModal(${e.id})">&#128196;</button>` : '';
     return `<div class="ev-card">
       <span class="ev-dot" style="background:${color}"></span>
       <div class="ev-info">
         <div class="ev-name">${e.description}</div>
-        <div class="ev-age">${t.ageLabel} ${e.age} &middot; ${typeLabel}</div>
+        <div class="ev-age">${t.ageLabel} ${e.age} &middot; ${typeLabel}${e.category?' &middot; '+e.category:''}</div>
+        ${noteSnip}
       </div>
+      ${noteBtn}
       <button class="ev-del" onclick="deleteEvent(${e.id})" title="Delete">&#215;</button>
     </div>`;
   }).join('');
@@ -1040,9 +1287,16 @@ function doReset() {
   document.getElementById('ageDisplay').textContent = '0';
   document.getElementById('eventAge').max = 100;
   setType('neutral');
+  selectedCat = '';
+  filterCat   = '';
   initDobSelects();
+  renderCatButtons();
+  renderFilterBar();
   renderEventsList();
   drawLifeline();
+  refreshInsights();
+  if (reflectOpen) renderReflect();
+  if (historyOpen) renderHistory();
 }
 
 /* ═══════════════════════════════════════
@@ -1113,7 +1367,8 @@ function doDownloadPDF() {
     const cNum  = M;
     const cAge  = M + 10;
     const cType = M + 22;
-    const cDesc = M + 58;
+    const cCat  = M + 55;
+    const cDesc = M + 85;
     const descMaxW = CW - (cDesc - M) - 4;
 
     doc.setFont('helvetica','normal');
@@ -1122,6 +1377,7 @@ function doDownloadPDF() {
     doc.text('#',                            cNum,  y);
     doc.text(t.ageLabel.toUpperCase(),       cAge,  y);
     doc.text(t.typeLbl.toUpperCase(),        cType, y);
+    doc.text(t.catLbl.toUpperCase(),         cCat,  y);
     doc.text(t.descLbl.toUpperCase(),        cDesc, y);
 
     y += 3;
@@ -1130,7 +1386,7 @@ function doDownloadPDF() {
     doc.line(M, y, M + CW, y);
     y += 4;
 
-    const rowH = 8;
+    const rowH = evt => (evt.note ? 12 : 8);
     events.forEach((evt, i) => {
       if (y > PH - 16) return;
       const color = EVENT_COLORS[evt.type] || '#7c5ff0';
@@ -1140,7 +1396,7 @@ function doDownloadPDF() {
 
       if (i % 2 === 0) {
         doc.setFillColor(...C.pdfRow);
-        doc.roundedRect(M - 2, y - 4, CW + 4, rowH, 1.5, 1.5, 'F');
+        doc.roundedRect(M - 2, y - 4, CW + 4, rowH(evt), 1.5, 1.5, 'F');
       }
 
       // # number
@@ -1168,6 +1424,13 @@ function doDownloadPDF() {
       doc.setTextColor(cr, cg, cb);
       doc.text(typeStr, cType + 2.5, y + 0.8);
 
+      // Category
+      if (evt.category) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+        doc.setTextColor(cr, cg, cb);
+        doc.text(evt.category, cCat, y + 1.5);
+      }
+
       // Description — truncate to fit column
       doc.setFont('helvetica','normal');
       doc.setFontSize(8.5);
@@ -1177,7 +1440,16 @@ function doDownloadPDF() {
       if (desc !== evt.description) desc = desc.trimEnd() + '…';
       doc.text(desc, cDesc, y + 1.5);
 
-      y += rowH;
+      // Note snippet
+      if (evt.note) {
+        let noteSnip = evt.note.replace(/\n/g,' ');
+        while (doc.getTextWidth(noteSnip) > descMaxW && noteSnip.length > 3) noteSnip = noteSnip.slice(0,-1);
+        if (noteSnip !== evt.note.replace(/\n/g,' ')) noteSnip = noteSnip.trimEnd()+'…';
+        doc.setFontSize(7); doc.setTextColor(...C.pdfMuted);
+        doc.text('↳ '+noteSnip, cDesc, y + 5.5);
+      }
+
+      y += rowH(evt);
     });
   }
 
@@ -1188,6 +1460,288 @@ function doDownloadPDF() {
   doc.text(t.pdfFooter, PW/2, PH - 8, { align:'center' });
 
   doc.save('lifeline.pdf');
+}
+
+/* ═══════════════════════════════════════
+   CATEGORIES
+═══════════════════════════════════════ */
+function renderCatButtons() {
+  const t    = LANGS[lang];
+  const cats = t.cats;
+  const grp  = document.getElementById('catGroup');
+  if (!grp) return;
+  grp.innerHTML = cats.map(c => {
+    const color = CAT_COLORS[c] || '#71717a';
+    const active = selectedCat === c;
+    return `<button type="button" class="cat-btn${active?' active':''}"
+      style="${active?'background:'+color+';':'border-color:'+color+'44;color:'+color+';'}"
+      onclick="selectCat('${c}')">${c}</button>`;
+  }).join('');
+}
+
+function selectCat(cat) {
+  selectedCat = (selectedCat === cat) ? '' : cat;
+  renderCatButtons();
+}
+
+function renderFilterBar() {
+  const t    = LANGS[lang];
+  const wrap = document.getElementById('filterBarWrap');
+  const bar  = document.getElementById('filterBar');
+  const usedCats = [...new Set(events.map(e=>e.category).filter(Boolean))];
+  if (usedCats.length < 2) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  const allActive = !filterCat;
+  bar.innerHTML = `<button class="cat-filter-btn${allActive?' on':''}" style="${allActive?'background:#7c5ff0;':''}" onclick="setFilter('')">${t.catAll}</button>`
+    + usedCats.map(c => {
+      const color  = CAT_COLORS[c] || '#71717a';
+      const active = filterCat === c;
+      return `<button class="cat-filter-btn${active?' on':''}" style="${active?'background:'+color+';':''}" onclick="setFilter('${c}')">${c}</button>`;
+    }).join('');
+}
+
+function setFilter(cat) {
+  filterCat = cat;
+  renderFilterBar();
+  renderEventsList();
+}
+
+/* ═══════════════════════════════════════
+   NOTE MODAL
+═══════════════════════════════════════ */
+function openNoteModal(id) {
+  const evt = events.find(e=>e.id===id);
+  if (!evt || !evt.note) return;
+  const t = LANGS[lang];
+  document.getElementById('noteTitleEl').textContent = evt.description;
+  document.getElementById('noteBodyEl').textContent  = evt.note;
+  document.getElementById('noteOverlay').style.display = 'flex';
+}
+
+function closeNoteModal(e) {
+  if (e && e.target !== document.getElementById('noteOverlay')) return;
+  document.getElementById('noteOverlay').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════
+   INSIGHTS (peak & valley)
+═══════════════════════════════════════ */
+function refreshInsights() {
+  const t    = LANGS[lang];
+  const body = document.getElementById('insightsBody');
+  document.getElementById('txt-insights-lbl').textContent = t.insightsLbl;
+
+  if (events.length < 2) {
+    body.innerHTML = `<div style="font-size:0.85rem;color:var(--hint);font-style:italic">${t.insightsHint}</div>`;
+    return;
+  }
+
+  const pos  = events.filter(e=>e.type==='positive');
+  const hard = events.filter(e=>e.type==='hard');
+  const total = events.length;
+  const posCount  = pos.length;
+  const hardCount = hard.length;
+  const neuCount  = total - posCount - hardCount;
+
+  // Peak: 10-year window with most positive events
+  let peakAge = null, peakCount = 0;
+  if (pos.length >= 1) {
+    for (let a = 0; a <= (profile.age||80); a++) {
+      const c = pos.filter(e=>e.age>=a && e.age<=a+10).length;
+      if (c > peakCount) { peakCount=c; peakAge=a; }
+    }
+  }
+
+  // Valley: 10-year window with most challenging events
+  let valleyAge = null, valleyCount = 0;
+  if (hard.length >= 1) {
+    for (let a = 0; a <= (profile.age||80); a++) {
+      const c = hard.filter(e=>e.age>=a && e.age<=a+10).length;
+      if (c > valleyCount) { valleyCount=c; valleyAge=a; }
+    }
+  }
+
+  const posBar  = Math.round((posCount/total)*100);
+  const hardBar = Math.round((hardCount/total)*100);
+  const neuBar  = 100 - posBar - hardBar;
+
+  body.innerHTML = `
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="insight-badge">✨</div>
+        <div class="insight-title">${t.peakTitle}</div>
+        <div class="insight-value">${peakAge!==null ? t.peakUnit+' '+peakAge+'–'+(peakAge+10) : t.peakNone}</div>
+        <div class="insight-sub">${peakAge!==null ? peakCount+' '+(lang==='es'?'eventos positivos':'positive events') : ''}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-badge">🌊</div>
+        <div class="insight-title">${t.valleyTitle}</div>
+        <div class="insight-value">${valleyAge!==null ? t.peakUnit+' '+valleyAge+'–'+(valleyAge+10) : t.valleyNone}</div>
+        <div class="insight-sub">${valleyAge!==null ? valleyCount+' '+(lang==='es'?'eventos desafiantes':'challenging events') : ''}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-badge">⚖️</div>
+        <div class="insight-title">${t.balanceTitle}</div>
+        <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin:6px 0">
+          <div style="width:${posBar}%;background:#22c55e"></div>
+          <div style="width:${neuBar}%;background:#7c5ff0"></div>
+          <div style="width:${hardBar}%;background:#ef4444"></div>
+        </div>
+        <div class="insight-sub" style="display:flex;gap:10px;font-size:0.75rem">
+          <span style="color:#22c55e">${posCount} ${lang==='es'?'pos':'pos'}</span>
+          <span style="color:#7c5ff0">${neuCount} ${lang==='es'?'neu':'neu'}</span>
+          <span style="color:#ef4444">${hardCount} ${lang==='es'?'des':'chal'}</span>
+        </div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-badge">📍</div>
+        <div class="insight-title">${t.totalTitle}</div>
+        <div class="insight-value" style="font-size:2rem;font-family:'DM Serif Display',serif">${total}</div>
+        <div class="insight-sub">${profile.age ? (lang==='es'?'en '+profile.age+' años de vida':'across '+profile.age+' years') : ''}</div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════
+   REFLECTION QUESTIONS
+═══════════════════════════════════════ */
+function toggleReflect() {
+  reflectOpen = !reflectOpen;
+  document.getElementById('reflectContent').style.display = reflectOpen ? 'block' : 'none';
+  document.getElementById('reflectChevron').style.transform = reflectOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (reflectOpen) renderReflect();
+}
+
+function renderReflect() {
+  const t    = LANGS[lang];
+  const body = document.getElementById('reflectBody');
+  if (events.length < 2) {
+    body.innerHTML = `<div style="font-size:0.85rem;color:var(--hint);font-style:italic">${t.insightsHint}</div>`;
+    return;
+  }
+  const pos  = events.filter(e=>e.type==='positive').length;
+  const hard = events.filter(e=>e.type==='hard').length;
+  let key = 'mixed';
+  if (events.length < 4) key = 'few';
+  else if (pos > hard * 2) key = 'manyPositive';
+  else if (hard > pos) key = 'manyChallenging';
+  const qs = t.reflectQs[key] || t.reflectQs.mixed;
+  const colors = ['#22c55e','#7c5ff0','#ef4444'];
+  body.innerHTML = qs.map((q,i)=>`<div class="reflect-q" style="border-color:${colors[i%3]}">${q}</div>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   HISTORY
+═══════════════════════════════════════ */
+const LS_KEY = 'lifeline_history_v1';
+function loadHistory() { try { return JSON.parse(localStorage.getItem(LS_KEY))||[]; } catch(e){return[];} }
+function saveHistoryData(h) { try { localStorage.setItem(LS_KEY, JSON.stringify(h)); } catch(e){} }
+
+function toggleHistory() {
+  historyOpen = !historyOpen;
+  document.getElementById('historyContent').style.display = historyOpen ? 'block' : 'none';
+  document.getElementById('historyChevron').style.transform = historyOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (historyOpen) renderHistory();
+}
+
+function saveSnapshot() {
+  const h = loadHistory();
+  const now = new Date();
+  h.unshift({
+    id: now.getTime(),
+    date: now.toLocaleDateString(lang==='es'?'es-ES':'en-GB',{day:'numeric',month:'long',year:'numeric'}),
+    profile: {...profile},
+    events: JSON.parse(JSON.stringify(events)),
+  });
+  saveHistoryData(h);
+  renderHistory();
+}
+
+function loadSnapshot(id) {
+  const snap = loadHistory().find(e=>e.id===id);
+  if (!snap) return;
+  profile = {...snap.profile};
+  events  = JSON.parse(JSON.stringify(snap.events));
+  nextId  = Math.max(...events.map(e=>e.id), 0) + 1;
+  if (profile.name) document.getElementById('profileName').value = profile.name;
+  if (profile.age)  document.getElementById('profileAge').value  = profile.age;
+  const sl = document.getElementById('eventAge');
+  sl.max = profile.age || 100;
+  renderEventsList();
+  drawLifeline();
+  refreshInsights();
+  if (reflectOpen) renderReflect();
+  renderFilterBar();
+}
+
+function deleteHistSnapshot(id) {
+  saveHistoryData(loadHistory().filter(e=>e.id!==id));
+  renderHistory();
+}
+
+function openCompare(id) {
+  const snap = loadHistory().find(e=>e.id===id);
+  if (!snap) return;
+  const t = LANGS[lang];
+  document.getElementById('txt-compare-title').textContent = t.compareLbl;
+  const body = document.getElementById('compareBody');
+  const allAges = [...new Set([...snap.events, ...events].map(e=>e.age))].sort((a,b)=>a-b);
+  const snapMap = {};
+  snap.events.forEach(e => snapMap[e.id+'_'+e.age] = e);
+  let tableHtml = `<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">${snap.date} → ${t.compareB}</div>`;
+  tableHtml += `<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 10px;font-size:0.82rem">
+    <span style="color:var(--muted);font-weight:500">${lang==='es'?'Edad':'Age'}</span>
+    <span style="color:#ef4444;font-weight:500">${snap.date.split(' ').slice(-1)[0]}</span>
+    <span style="color:#7c5ff0;font-weight:500">${t.compareB}</span>`;
+  const snapDescs = snap.events.map(e=>({age:e.age, label:e.description, color:EVENT_COLORS[e.type]||'#71717a'}));
+  const currDescs = events.map(e=>({age:e.age, label:e.description, color:EVENT_COLORS[e.type]||'#71717a'}));
+  const added   = currDescs.filter(c=>!snapDescs.some(s=>s.label===c.label));
+  const removed = snapDescs.filter(s=>!currDescs.some(c=>c.label===s.label));
+  const common  = snapDescs.filter(s=>currDescs.some(c=>c.label===s.label));
+  common.forEach(e=>{
+    tableHtml+=`<span style="color:var(--muted)">${e.age}</span><span style="color:${e.color}">${e.label}</span><span style="color:${e.color}">${e.label}</span>`;
+  });
+  removed.forEach(e=>{
+    tableHtml+=`<span style="color:var(--muted)">${e.age}</span><span style="color:${e.color}">${e.label}</span><span style="color:var(--hint);font-style:italic">${lang==='es'?'eliminado':'removed'}</span>`;
+  });
+  added.forEach(e=>{
+    tableHtml+=`<span style="color:var(--muted)">${e.age}</span><span style="color:var(--hint);font-style:italic">${lang==='es'?'no existía':'not present'}</span><span style="color:${e.color}">${e.label}</span>`;
+  });
+  tableHtml += '</div>';
+  body.innerHTML = tableHtml;
+  document.getElementById('compareOverlay').style.display = 'flex';
+}
+
+function closeCompare(e) {
+  if (e && e.target !== document.getElementById('compareOverlay')) return;
+  document.getElementById('compareOverlay').style.display = 'none';
+}
+
+function renderHistory() {
+  const t    = LANGS[lang];
+  const body = document.getElementById('historyBody');
+  document.getElementById('txt-history-intro').innerHTML = t.historyIntro
+    .replace(/\n\n/g,'<br><br>').replace(/⚠️/g,'<span style="color:#eab308">⚠️</span>');
+  document.getElementById('btn-save-snap').textContent = t.histSave;
+  const h = loadHistory();
+  if (h.length === 0) {
+    body.innerHTML = `<div style="font-size:0.85rem;color:var(--hint);font-style:italic">${t.histEmpty}</div>`;
+    return;
+  }
+  body.innerHTML = h.map(e => {
+    const showCompare = h.length >= 2;
+    return `<div class="hist-entry">
+      <div>
+        <div class="hist-date">${e.date}</div>
+        <div class="hist-count" style="color:var(--muted)">${e.events.length} ${lang==='es'?'eventos':'events'}</div>
+      </div>
+      <div class="hist-btns">
+        <button class="hist-btn" onclick="loadSnapshot(${e.id})">${t.histLoad}</button>
+        ${showCompare?`<button class="hist-btn" onclick="openCompare(${e.id})">${t.histCompare}</button>`:''}
+        <button class="hist-btn danger" onclick="deleteHistSnapshot(${e.id})">${t.histDel}</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /* ═══════════════════════════════════════
@@ -1240,7 +1794,9 @@ setInstructionsText();
 setType('neutral');
 paintAgeSlider(EVENT_COLORS['neutral']);
 document.getElementById('ageDisplay').textContent = '0';
+renderCatButtons();
 drawLifeline();
+refreshInsights();
 </script>
 </body>
 </html>
