@@ -2133,7 +2133,8 @@ async function handleAuthState(session) {
   currentUser = session.user;
   const { data: prof } = await db.from('profiles').select('*').eq('id', session.user.id).single();
   userProfile = prof;
-  if (!userProfile || userProfile.status === 'pending') {
+  await stampOrgIfNeeded(session.user.id, userProfile);
+  if (!userProfile || userProfile.status === 'pending' || userProfile.status === 'blocked') {
     document.getElementById('authLoginForm').style.display = 'none';
     document.getElementById('authPending').style.display   = 'block';
     overlay.classList.remove('hidden');
@@ -2189,6 +2190,7 @@ async function saveAndNotify() {
   await db.from('lifeline_snapshots').update({ completed: true }).eq('id', latest.cloudId);
   await db.from('notifications').insert({
     user_id: currentUser.id,
+    org_id:  userProfile?.org_id || null,
     type: 'lifeline',
     snapshot_id: latest.cloudId,
   });
@@ -2212,6 +2214,7 @@ async function markComplete() {
   await db.from('lifeline_snapshots').update({ completed: true }).eq('id', latest.cloudId);
   await db.from('notifications').insert({
     user_id: currentUser.id,
+    org_id:  userProfile?.org_id || null,
     type: 'lifeline',
     snapshot_id: latest.cloudId,
   });
@@ -2247,6 +2250,7 @@ async function saveToCloud(snap) {
   if (!currentUser) return null;
   const { data } = await db.from('lifeline_snapshots').insert({
     user_id: currentUser.id,
+    org_id:  userProfile?.org_id || null,
     profile_data: snap.profile,
     events: snap.events,
     lang: lang,
@@ -2488,6 +2492,54 @@ async function dismissPractitionerMsg() {
     await db.from('profiles').update({ practitioner_message: null }).eq('id', currentUser.id);
     if (userProfile) userProfile.practitioner_message = null;
   }
+}
+
+
+/* ═══════════════════════════════════════
+   MULTI-TENANCY — read ?org= from URL
+   and stamp profile on first login
+═══════════════════════════════════════ */
+function getOrgFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('org') || null;
+  } catch(e) { return null; }
+}
+
+function storeOrgId(orgId) {
+  try { localStorage.setItem('cafi_org_id', orgId); } catch(e) {}
+}
+
+function getStoredOrgId() {
+  try { return localStorage.getItem('cafi_org_id'); } catch(e) { return null; }
+}
+
+async function resolveOrgId(userId) {
+  // Priority: URL param > localStorage > profile existing value
+  const fromUrl = getOrgFromUrl();
+  if (fromUrl) { storeOrgId(fromUrl); return fromUrl; }
+  return getStoredOrgId();
+}
+
+async function stampOrgIfNeeded(userId, profile) {
+  if (profile && profile.org_id) {
+    // Already has an org — store locally for future
+    storeOrgId(profile.org_id);
+    return;
+  }
+  // No org yet — try to assign from URL or invitation table
+  const orgId = await resolveOrgId(userId);
+  if (!orgId) return;
+  // Check invitations table for this user's email
+  const { data: inv } = await db.from('invitations')
+    .select('org_id, name')
+    .eq('email', profile.email || '')
+    .single();
+  const finalOrgId = inv?.org_id || orgId;
+  const updates = { org_id: finalOrgId };
+  if (inv?.name && !profile.name) updates.name = inv.name;
+  await db.from('profiles').update(updates).eq('id', userId);
+  if (userProfile) userProfile.org_id = finalOrgId;
 }
 
 /* ═══════════════════════════════════════
