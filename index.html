@@ -329,7 +329,7 @@
 
   <!-- Main app (hidden until Begin) -->
   <div id="mainApp" class="hidden-section">
-    <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="200"></canvas></div>
+    <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="280"></canvas></div>
 
     <div class="two-col">
       <div class="panel">
@@ -372,9 +372,7 @@
       <button class="btn btn-ghost" id="exportBtn">⬇ Export backup (JSON)</button>
       <label class="btn btn-ghost" style="cursor:pointer;">⬆ Import backup<input type="file" id="importFile" accept=".json" style="display:none"></label>
     </div>
-    <div id="backupInstructions" class="backup-note" style="text-align: left; font-size: 0.85rem;">
-      <!-- dynamic content from translations -->
-    </div>
+    <div id="backupInstructions" class="backup-note" style="text-align: left; font-size: 0.85rem;"></div>
   </div>
 
   <footer>Made with love by Juanjo & Vanessa ❤️<br>CaFi — Tools by psychologists for psychologists</footer>
@@ -396,6 +394,7 @@
       peakTitle: 'Strongest period', valleyTitle: 'Most challenging period', peakNone: 'Add more positive events', valleyNone: 'No notable challenging periods', peakUnit: 'around age', balanceTitle: 'Balance', totalTitle: 'Total events',
       backupLabel: 'Backup & restore',
       backupInstructions: '💾 Your data is saved automatically in your browser. To keep it safe:<br>• Click <strong>Export backup</strong> to download a .json file — save it on your computer, phone, or cloud drive.<br>• To restore later, click <strong>Import backup</strong> and select the file.<br>⚠️ Important: Clearing your browser cache will erase your data. Always keep a backup!',
+      importSuccess: 'Backup restored successfully! Click "Begin" to continue editing.',
       reflectQs: {
         manyPositive: ['What patterns do you notice in your best moments?', 'What conditions helped create your happiest periods?', 'How can you recreate more of those moments today?'],
         manyChallenging: ['What strengths helped you get through your most difficult times?', 'What did you learn from your hardest experiences?', 'Is there a challenging period you have not fully processed yet?'],
@@ -416,6 +415,7 @@
       peakTitle: 'Período más positivo', valleyTitle: 'Período más desafiante', peakNone: 'Agrega más eventos positivos', valleyNone: 'No se detectaron períodos desafiantes', peakUnit: 'alrededor de los', balanceTitle: 'Equilibrio', totalTitle: 'Total eventos',
       backupLabel: 'Copia de seguridad',
       backupInstructions: '💾 Tus datos se guardan automáticamente en el navegador. Para mantenerlos seguros:<br>• Haz clic en <strong>Exportar copia</strong> para descargar un archivo .json — guárdalo en tu ordenador, móvil o nube.<br>• Para restaurar más tarde, haz clic en <strong>Importar copia</strong> y selecciona el archivo.<br>⚠️ Importante: Borrar la caché del navegador borrará tus datos. ¡Guarda siempre una copia de seguridad!',
+      importSuccess: '¡Copia restaurada con éxito! Haz clic en "Comenzar" para continuar editando.',
       reflectQs: {
         manyPositive: ['¿Qué patrones notas en tus mejores momentos?', '¿Qué condiciones ayudaron a crear tus períodos más felices?', '¿Cómo puedes recrear más de esos momentos hoy?'],
         manyChallenging: ['¿Qué fortalezas te ayudaron a superar tus momentos más difíciles?', '¿Qué aprendiste de tus experiencias más duras?', '¿Hay algún período difícil que aún no hayas procesado del todo?'],
@@ -486,22 +486,18 @@
     document.getElementById('instrChevron').style.transform = instrOpen ? 'rotate(180deg)' : 'rotate(0deg)';
   }
 
-  // Apply language to all UI elements (including placeholders and hidden sections)
+  // Apply language to all UI elements
   function applyLanguage() {
     const t = LANGS[lang];
-    // Top bar and instructions
     document.getElementById('globalSubhead').innerText = t.globalSubhead;
     document.getElementById('instrTitle').innerText = t.instrTitle;
     document.getElementById('instrBody').innerHTML = t.instrBody;
-    // Profile panel
     document.getElementById('profileLabel').innerText = t.profileLabel;
     document.getElementById('nameLabel').innerText = t.nameLabel;
     document.getElementById('dobLabel').innerText = t.dobLabel;
     document.getElementById('ageLabel').innerText = t.ageLabel;
     beginBtn.innerText = t.begin;
-    // Profile placeholders
     document.getElementById('profileName').placeholder = t.nameLabel;
-    // Main app (if visible, but we also set for when it becomes visible later)
     if (!mainApp.classList.contains('hidden-section')) {
       document.getElementById('addEventLabel').innerText = t.addEventLabel;
       document.getElementById('descLabel').innerText = t.descLabel;
@@ -519,15 +515,12 @@
       downloadBtn.innerText = t.download;
       document.getElementById('eventsEmptyMsg').innerText = t.noEvents;
     }
-    // Event placeholders (always update even if hidden)
     document.getElementById('eventDesc').placeholder = t.descLabel;
     document.getElementById('eventNote').placeholder = 'Add a private reflection...';
-    // Backup section
     document.getElementById('backupLabel').innerText = t.backupLabel;
     document.getElementById('exportBtn').innerText = '⬇ Export backup (JSON)';
     document.querySelector('label.btn-ghost').innerHTML = '⬆ Import backup<input type="file" id="importFile" accept=".json" style="display:none">';
     document.getElementById('backupInstructions').innerHTML = t.backupInstructions;
-    // Re-render dynamic content
     renderEventsList();
     drawLifeline();
     refreshInsights();
@@ -603,37 +596,74 @@
     }).join('');
   }
 
-  // Canvas drawing with proper timeline
+  // Improved canvas with non-overlapping labels using alternating sides and collision detection
   function drawLifeline() {
     let canvas = document.getElementById('lifelineCanvas');
     let ctx = canvas.getContext('2d');
     if (!profile.age || profile.age < 1 || events.length === 0) {
-      canvas.width = 800; canvas.height = 180;
-      ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,800,180);
-      ctx.fillStyle = '#B7B7A8'; ctx.font = '14px "DM Sans"'; ctx.fillText(LANGS[lang].peakNone, 400, 90);
+      canvas.width = 800; canvas.height = 200;
+      ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,800,200);
+      ctx.fillStyle = '#B7B7A8'; ctx.font = '14px "DM Sans"'; ctx.fillText(LANGS[lang].peakNone, 400, 100);
       return;
     }
-    let W = Math.max(800, profile.age * 22 + 140);
-    let H = 200;
+    let W = Math.max(900, profile.age * 24 + 160);
+    let H = 280;
     canvas.width = W; canvas.height = H;
     ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,W,H);
-    let startX = 70, endX = W-70, yLine = 100;
+    let startX = 80, endX = W-80, yLine = 140;
     ctx.beginPath(); ctx.moveTo(startX, yLine); ctx.lineTo(endX, yLine); ctx.strokeStyle = '#5C7257'; ctx.lineWidth = 2; ctx.stroke();
     for (let age = 10; age <= profile.age; age += 10) {
       let x = startX + (age/profile.age)*(endX-startX);
       ctx.beginPath(); ctx.moveTo(x, yLine-8); ctx.lineTo(x, yLine+8); ctx.strokeStyle = '#EDE7D8'; ctx.stroke();
       ctx.fillStyle = '#6B6B5E'; ctx.font = '10px "DM Sans"'; ctx.fillText(age, x-5, yLine+18);
     }
+    // Pre-calculate label positions to avoid overlap
+    let labelHeight = 18;
+    let usedPositions = [];
     events.forEach(ev => {
       let x = startX + (ev.age/profile.age)*(endX-startX);
-      ctx.beginPath(); ctx.arc(x, yLine, 7, 0, 2*Math.PI); ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
-      ctx.fillStyle = '#2A2A25'; ctx.font = '11px "DM Sans"';
-      let label = ev.description.length > 18 ? ev.description.substring(0,15)+'…' : ev.description;
-      ctx.fillText(label, x-20, yLine-10);
+      let label = ev.description.length > 20 ? ev.description.substring(0,18)+'…' : ev.description;
+      let textWidth = ctx.measureText(label).width + 8;
+      let side = 'above'; // default above
+      let yOffset = -25;
+      // check collisions with previously placed labels
+      let collision = true;
+      let attempt = 0;
+      while (collision && attempt < 4) {
+        collision = false;
+        let yPos = yLine + yOffset;
+        let left = x - textWidth/2;
+        let right = x + textWidth/2;
+        for (let p of usedPositions) {
+          if (Math.abs(p.x - x) < (textWidth/2 + p.w/2) && Math.abs(p.y - yPos) < labelHeight) {
+            collision = true;
+            break;
+          }
+        }
+        if (collision) {
+          if (attempt === 0) { side = 'below'; yOffset = 30; }
+          else if (attempt === 1) { side = 'above'; yOffset = -45; }
+          else if (attempt === 2) { side = 'below'; yOffset = 50; }
+          else { yOffset = (attempt % 2 === 0 ? -60 : 65); }
+          attempt++;
+        }
+      }
+      usedPositions.push({ x, w: textWidth, y: yLine + yOffset, side });
+      ev._labelX = x;
+      ev._labelY = yLine + yOffset;
+      ev._labelText = label;
     });
-    ctx.fillStyle = '#5C7257'; ctx.font = 'bold 10px "DM Sans"';
-    ctx.fillText('0', startX-10, yLine+18);
-    ctx.fillText(profile.age, endX+5, yLine+18);
+    // Draw stems and dots
+    events.forEach(ev => {
+      let yLabel = ev._labelY;
+      let dir = yLabel < yLine ? -1 : 1;
+      ctx.beginPath(); ctx.moveTo(ev._labelX, yLine + (dir * 6)); ctx.lineTo(ev._labelX, yLabel - (dir * 6)); ctx.strokeStyle = EVENT_COLORS[ev.type]; ctx.lineWidth = 1.2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(ev._labelX, yLine, 7, 0, 2*Math.PI); ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
+      ctx.fillStyle = '#2A2A25'; ctx.font = '11px "DM Sans"'; ctx.fillText(ev._labelText, ev._labelX - ctx.measureText(ev._labelText).width/2, ev._labelY);
+      // optional age sub-label
+      ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.font = '9px "DM Sans"'; ctx.fillText(ev.age, ev._labelX - 10, ev._labelY + (ev._labelY < yLine ? 12 : -4));
+    });
+    ctx.fillStyle = '#5C7257'; ctx.font = 'bold 10px "DM Sans"'; ctx.fillText('0', startX-10, yLine+18); ctx.fillText(profile.age, endX+5, yLine+18);
   }
 
   // Insights & Reflections
@@ -670,7 +700,7 @@
     if(reflectOpen) renderReflect();
   }
 
-  // PDF export
+  // PDF export (includes notes)
   function downloadPDF() {
     let { jsPDF } = window.jspdf;
     const t = LANGS[lang];
@@ -691,8 +721,16 @@
       events.slice(0,12).forEach((ev,i) => {
         if (y > 190) return;
         doc.setFont('helvetica','normal'); doc.setFontSize(8);
-        doc.text(`${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`, 20, y);
-        y += 6;
+        let line = `${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`;
+        doc.text(line, 20, y);
+        y += 5;
+        if (ev.note && ev.note.trim()) {
+          doc.setFontSize(7); doc.setTextColor(107,107,94);
+          let noteLines = doc.splitTextToSize(`📓 ${ev.note}`, 250);
+          doc.text(noteLines, 25, y);
+          y += noteLines.length * 4;
+        }
+        y += 2;
       });
     }
     doc.save('lifeline.pdf');
@@ -775,7 +813,7 @@
           refreshInsights();
           if(reflectOpen) renderReflect();
           saveToLocal();
-          alert(LANGS[lang].peakNone);
+          alert(LANGS[lang].importSuccess);
         } else throw new Error();
       } catch(err) { alert('Invalid backup file.'); }
     };
@@ -795,8 +833,7 @@
     mainApp.classList.remove('hidden-section');
     eventAgeSlider.max = age;
     updateSliderColor();
-    // Apply translations to main app elements now that they are visible
-    applyLanguage();
+    applyLanguage(); // ensure labels are correct now that mainApp is visible
     renderEventsList();
     drawLifeline();
     refreshInsights();
