@@ -329,7 +329,7 @@
 
   <!-- Main app (hidden until Begin) -->
   <div id="mainApp" class="hidden-section">
-    <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="280"></canvas></div>
+    <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="350"></canvas></div>
 
     <div class="two-col">
       <div class="panel">
@@ -596,7 +596,7 @@
     }).join('');
   }
 
-  // Improved canvas with non-overlapping labels using alternating sides and collision detection
+  // Improved canvas with advanced collision avoidance using multiple lanes
   function drawLifeline() {
     let canvas = document.getElementById('lifelineCanvas');
     let ctx = canvas.getContext('2d');
@@ -606,8 +606,8 @@
       ctx.fillStyle = '#B7B7A8'; ctx.font = '14px "DM Sans"'; ctx.fillText(LANGS[lang].peakNone, 400, 100);
       return;
     }
-    let W = Math.max(900, profile.age * 24 + 160);
-    let H = 280;
+    let W = Math.max(1000, profile.age * 26 + 180);
+    let H = Math.max(350, 200 + events.length * 12);
     canvas.width = W; canvas.height = H;
     ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,W,H);
     let startX = 80, endX = W-80, yLine = 140;
@@ -617,51 +617,55 @@
       ctx.beginPath(); ctx.moveTo(x, yLine-8); ctx.lineTo(x, yLine+8); ctx.strokeStyle = '#EDE7D8'; ctx.stroke();
       ctx.fillStyle = '#6B6B5E'; ctx.font = '10px "DM Sans"'; ctx.fillText(age, x-5, yLine+18);
     }
-    // Pre-calculate label positions to avoid overlap
-    let labelHeight = 18;
-    let usedPositions = [];
+    // Multi-lane label placement (above and below with multiple rows)
+    let lanesAbove = [];
+    let lanesBelow = [];
+    let laneHeight = 22;
+    let maxLanes = 6;
+    for (let i=0; i<maxLanes; i++) { lanesAbove.push([]); lanesBelow.push([]); }
     events.forEach(ev => {
       let x = startX + (ev.age/profile.age)*(endX-startX);
-      let label = ev.description.length > 20 ? ev.description.substring(0,18)+'…' : ev.description;
-      let textWidth = ctx.measureText(label).width + 8;
-      let side = 'above'; // default above
-      let yOffset = -25;
-      // check collisions with previously placed labels
-      let collision = true;
-      let attempt = 0;
-      while (collision && attempt < 4) {
-        collision = false;
+      let label = ev.description.length > 22 ? ev.description.substring(0,20)+'…' : ev.description;
+      let textWidth = ctx.measureText(label).width + 12;
+      // try to place above first, then below
+      let placed = false;
+      for (let lane=0; lane<maxLanes; lane++) {
+        let yOffset = - (lane+1) * laneHeight - 15;
         let yPos = yLine + yOffset;
-        let left = x - textWidth/2;
-        let right = x + textWidth/2;
-        for (let p of usedPositions) {
-          if (Math.abs(p.x - x) < (textWidth/2 + p.w/2) && Math.abs(p.y - yPos) < labelHeight) {
-            collision = true;
+        let collides = lanesAbove[lane].some(ex => Math.abs(ex.x - x) < (textWidth/2 + ex.w/2) && Math.abs(ex.y - yPos) < laneHeight);
+        if (!collides) {
+          lanesAbove[lane].push({ x, w: textWidth, y: yPos });
+          ev._labelX = x; ev._labelY = yPos; ev._labelText = label; ev._side = 'above';
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        for (let lane=0; lane<maxLanes; lane++) {
+          let yOffset = (lane+1) * laneHeight + 20;
+          let yPos = yLine + yOffset;
+          let collides = lanesBelow[lane].some(ex => Math.abs(ex.x - x) < (textWidth/2 + ex.w/2) && Math.abs(ex.y - yPos) < laneHeight);
+          if (!collides) {
+            lanesBelow[lane].push({ x, w: textWidth, y: yPos });
+            ev._labelX = x; ev._labelY = yPos; ev._labelText = label; ev._side = 'below';
+            placed = true;
             break;
           }
         }
-        if (collision) {
-          if (attempt === 0) { side = 'below'; yOffset = 30; }
-          else if (attempt === 1) { side = 'above'; yOffset = -45; }
-          else if (attempt === 2) { side = 'below'; yOffset = 50; }
-          else { yOffset = (attempt % 2 === 0 ? -60 : 65); }
-          attempt++;
-        }
       }
-      usedPositions.push({ x, w: textWidth, y: yLine + yOffset, side });
-      ev._labelX = x;
-      ev._labelY = yLine + yOffset;
-      ev._labelText = label;
+      if (!placed) {
+        // fallback: place at the last possible lane
+        ev._labelX = x; ev._labelY = yLine - 15; ev._labelText = label;
+      }
     });
     // Draw stems and dots
     events.forEach(ev => {
       let yLabel = ev._labelY;
       let dir = yLabel < yLine ? -1 : 1;
-      ctx.beginPath(); ctx.moveTo(ev._labelX, yLine + (dir * 6)); ctx.lineTo(ev._labelX, yLabel - (dir * 6)); ctx.strokeStyle = EVENT_COLORS[ev.type]; ctx.lineWidth = 1.2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(ev._labelX, yLine + (dir * 5)); ctx.lineTo(ev._labelX, yLabel - (dir * 5)); ctx.strokeStyle = EVENT_COLORS[ev.type]; ctx.lineWidth = 1.2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
       ctx.beginPath(); ctx.arc(ev._labelX, yLine, 7, 0, 2*Math.PI); ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
       ctx.fillStyle = '#2A2A25'; ctx.font = '11px "DM Sans"'; ctx.fillText(ev._labelText, ev._labelX - ctx.measureText(ev._labelText).width/2, ev._labelY);
-      // optional age sub-label
-      ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.font = '9px "DM Sans"'; ctx.fillText(ev.age, ev._labelX - 10, ev._labelY + (ev._labelY < yLine ? 12 : -4));
+      ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.font = '9px "DM Sans"'; ctx.fillText(ev.age, ev._labelX - 12, ev._labelY + (ev._labelY < yLine ? 14 : -4));
     });
     ctx.fillStyle = '#5C7257'; ctx.font = 'bold 10px "DM Sans"'; ctx.fillText('0', startX-10, yLine+18); ctx.fillText(profile.age, endX+5, yLine+18);
   }
@@ -700,38 +704,50 @@
     if(reflectOpen) renderReflect();
   }
 
-  // PDF export (includes notes)
+  // PDF export with multi-page support and language
   function downloadPDF() {
     let { jsPDF } = window.jspdf;
     const t = LANGS[lang];
-    let doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-    doc.setFillColor(253,250,244); doc.rect(0,0,297,210,'F');
+    let doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    let pageWidth = 297, pageHeight = 210, margin = 20, y = 35;
+    let addPageIfNeeded = () => {
+      if (y > pageHeight - 25) {
+        doc.addPage();
+        y = 35;
+      }
+    };
+    // Title
+    doc.setFillColor(253,250,244); doc.rect(0,0,pageWidth,pageHeight,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(92,114,87);
-    doc.text(profile.name ? profile.name + "'s Lifeline" : 'Lifeline', 148, 20, { align:'center' });
+    doc.text(profile.name ? profile.name + "'s Lifeline" : 'Lifeline', pageWidth/2, 20, { align:'center' });
     doc.setFontSize(9); doc.setTextColor(107,107,94);
-    doc.text(new Date().toLocaleDateString(), 148, 28, { align:'center' });
+    doc.text(new Date().toLocaleDateString(), pageWidth/2, 28, { align:'center' });
+    // Canvas image
     let canvas = document.getElementById('lifelineCanvas');
     let imgData = canvas.toDataURL('image/png');
-    doc.addImage(imgData, 'PNG', 20, 35, 257, 60);
-    let y = 105;
+    doc.addImage(imgData, 'PNG', margin, 35, pageWidth - 2*margin, 60);
+    y = 110;
+    // Events list with pagination
     if (events.length) {
-      doc.setFontSize(8); doc.setTextColor(92,114,87);
-      doc.text('Events', 20, y);
+      doc.setFontSize(10); doc.setTextColor(92,114,87); doc.setFont('helvetica','bold');
+      doc.text(t.eventsListLabel, margin, y);
       y += 6;
-      events.slice(0,12).forEach((ev,i) => {
-        if (y > 190) return;
-        doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      for (let i=0; i<events.length; i++) {
+        addPageIfNeeded();
+        let ev = events[i];
+        doc.setFontSize(9); doc.setTextColor(42,42,37); doc.setFont('helvetica','normal');
         let line = `${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`;
-        doc.text(line, 20, y);
+        doc.text(line, margin, y);
         y += 5;
         if (ev.note && ev.note.trim()) {
-          doc.setFontSize(7); doc.setTextColor(107,107,94);
-          let noteLines = doc.splitTextToSize(`📓 ${ev.note}`, 250);
-          doc.text(noteLines, 25, y);
+          addPageIfNeeded();
+          doc.setFontSize(8); doc.setTextColor(107,107,94);
+          let noteLines = doc.splitTextToSize(`📓 ${ev.note}`, pageWidth - 2*margin - 10);
+          doc.text(noteLines, margin + 5, y);
           y += noteLines.length * 4;
         }
-        y += 2;
-      });
+        y += 3;
+      }
     }
     doc.save('lifeline.pdf');
   }
