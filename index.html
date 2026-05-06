@@ -60,7 +60,21 @@
         .insight-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; text-transform: uppercase; }
         .reflect-q { padding: 0.8rem 1rem 0.8rem 1.5rem; border-left: 6px solid #FFED00; background: #fff; margin-bottom: 0.75rem; border: 3px solid #000; box-shadow: 2px 2px 0 #000; }
         .actions { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0 1rem; flex-wrap: wrap; }
-        footer { margin-top: 3rem; text-align: center; background: #000; color: #FFED00; padding: 2rem; border-top: 6px solid #FFED00; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+        
+        /* Footer – now an orange panel */
+        footer {
+            margin-top: 3rem;
+            background: #FF5E00;
+            color: #000;
+            border: 4px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            padding: 2rem;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
         .hidden-section { display: none; }
         .w-full { width: 100%; }
         input[type="range"] { padding: 0; height: 8px; -webkit-appearance: none; background: #ddd; border: 2px solid #000; }
@@ -180,7 +194,7 @@
             positive: 'Positive', neutral: 'Neutral', challenging: 'Challenging', addBtn: 'Add to lifeline',
             reset: '↺ Reset everything', download: 'Download PDF ↓', noEvents: 'No events yet. Add your first one!',
             alertProfile: 'Please fill your name and date of birth.', alertDesc: 'Please enter a description.',
-            peakTitle: 'Strongest period', valleyTitle: 'Most challenging period', peakNone: 'Add more positive events', valleyNone: 'No notable challenging periods', peakUnit: 'around age',
+            peakTitle: 'Strongest period', valleyTitle: 'Most challenging period', peakNone: 'Add more events', valleyNone: 'No notable challenging periods', peakUnit: 'around age',
             balanceTitle: 'Balance', totalTitle: 'Total events',
             backupLabel: 'Backup & restore',
             exportBtnText: '⬇ Export backup (JSON)',
@@ -204,7 +218,7 @@
             positive: 'Positivo', neutral: 'Neutral', challenging: 'Desafiante', addBtn: 'Agregar a la línea',
             reset: '↺ Reiniciar todo', download: 'Descargar PDF ↓', noEvents: 'Aún no hay eventos. ¡Agrega el primero!',
             alertProfile: 'Por favor completa tu nombre y fecha de nacimiento.', alertDesc: 'Por favor escribe una descripción.',
-            peakTitle: 'Período más positivo', valleyTitle: 'Período más desafiante', peakNone: 'Agrega más eventos positivos', valleyNone: 'No se detectaron períodos desafiantes', peakUnit: 'alrededor de los',
+            peakTitle: 'Período más positivo', valleyTitle: 'Período más desafiante', peakNone: 'Agrega más eventos', valleyNone: 'No se detectaron períodos desafiantes', peakUnit: 'alrededor de los',
             balanceTitle: 'Equilibrio', totalTitle: 'Total eventos',
             backupLabel: 'Copia de seguridad',
             exportBtnText: '⬇ Exportar copia (JSON)',
@@ -414,15 +428,12 @@
             return;
         }
 
-        // Group events by age and type to detect overlaps
-        const overlapMap = new Map(); // key: `${age}-${type}`, value: array of events
+        const overlapMap = new Map();
         events.forEach(ev => {
             const key = `${ev.age}-${ev.type}`;
             if (!overlapMap.has(key)) overlapMap.set(key, []);
             overlapMap.get(key).push(ev);
         });
-
-        // Assign each event an overlap index (0-based) within its group
         overlapMap.forEach(group => {
             group.forEach((ev, index) => {
                 ev._overlapIndex = index;
@@ -437,13 +448,11 @@
         const yLevels = { positive: 80, neutral: 190, hard: 300 };
         const baseY = 190;
 
-        // Grid lines
         ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
         ctx.setLineDash([5,5]);
         [80, 190, 300].forEach(y => { ctx.beginPath(); ctx.moveTo(startX,y); ctx.lineTo(endX,y); ctx.stroke(); });
         ctx.setLineDash([]);
 
-        // Draw connecting line
         if (events.length > 0) {
             ctx.beginPath(); ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
             let first = events[0];
@@ -459,19 +468,16 @@
             ctx.stroke();
         }
 
-        // Draw dots and labels with overlap offsets
         events.forEach(ev => {
             let x = startX + (ev.age/profile.age)*(endX-startX);
             let y = yLevels[ev.type] || baseY;
             const overlapIdx = ev._overlapIndex || 0;
 
-            // Dot
             ctx.beginPath(); ctx.arc(x, y, 9, 0, 2*Math.PI);
             ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
             ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.stroke();
 
-            // Label and age – shift upward for each overlapping event
-            const offset = overlapIdx * 14; // shift each subsequent label 14px higher
+            const offset = overlapIdx * 14;
             const labelY = y - 18 - offset;
             const ageY = labelY - 14;
 
@@ -482,7 +488,6 @@
             ctx.fillText(ev.age, x, ageY);
         });
 
-        // Age axis markers
         ctx.fillStyle = '#000'; ctx.font = 'bold 11px "DM Sans"'; ctx.textAlign = 'center';
         for (let age=10; age<=profile.age; age+=10) {
             let x = startX + (age/profile.age)*(endX-startX);
@@ -608,7 +613,6 @@
             events.forEach((ev, i) => {
                 const descLine = `${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`;
                 const descLines = doc.splitTextToSize(descLine, textWidth);
-                // Removed the emoji prefix to avoid encoding issues
                 const noteLines = ev.note ? wrapTextWithBreaks(doc, ev.note, noteTextWidth, 8) : null;
 
                 const lineHeight = 4.5;
