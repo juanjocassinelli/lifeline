@@ -1,887 +1,720 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lifeline — Map your story</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='30' width='56' height='4' rx='2' fill='%235C7257'/%3E%3Ccircle cx='12' cy='32' r='5' fill='%23B56A5C'/%3E%3Ccircle cx='28' cy='32' r='5' fill='%23D4B87A'/%3E%3Ccircle cx='44' cy='32' r='5' fill='%235C7257'/%3E%3Ccircle cx='58' cy='32' r='4' fill='%238A9E84'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #FDFAF4;
-    color: #2A2A25;
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.8;
-    padding: 2rem 5vw 4rem;
-  }
-  h1, h2, h3, .serif {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 500;
-  }
-  h1 {
-    font-size: clamp(2.8rem, 8vw, 4rem);
-    font-style: italic;
-    color: #5C7257;
-    letter-spacing: -0.01em;
-  }
-  .subhead {
-    color: #6B6B5E;
-    font-weight: 300;
-  }
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 3rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .lang-group {
-    display: flex;
-    gap: 0.5rem;
-  }
-  .lang-btn {
-    background: none;
-    border: 1px solid #D4DFCC;
-    border-radius: 40px;
-    padding: 0.3rem 1rem;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #2A2A25;
-  }
-  .lang-btn.active {
-    background: #5C7257;
-    border-color: #5C7257;
-    color: white;
-  }
-  .container {
-    max-width: 1280px;
-    margin: 0 auto;
-  }
-  .panel {
-    background: #FDFAF4;
-    border: 1px solid #EDE7D8;
-    border-radius: 2px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .panel-label {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #5C7257;
-    margin-bottom: 1.5rem;
-    border-left: 2px solid #D4DFCC;
-    padding-left: 0.75rem;
-  }
-  .field {
-    margin-bottom: 1.5rem;
-  }
-  .field label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #6B6B5E;
-    display: block;
-    margin-bottom: 0.5rem;
-  }
-  input, select, textarea {
-    width: 100%;
-    background: #FDFAF4;
-    border: 1px solid #EDE7D8;
-    border-radius: 2px;
-    padding: 0.85rem 1rem;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    color: #2A2A25;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #8A9E84;
-  }
-  .btn {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.8rem;
-    padding: 0.85rem 1.5rem;
-    border-radius: 40px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-primary {
-    background: #5C7257;
-    color: white;
-  }
-  .btn-primary:hover {
-    background: #4A5E45;
-    transform: translateY(-2px);
-  }
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid #D4DFCC;
-    color: #2A2A25;
-  }
-  .btn-ghost:hover {
-    background: #F6F2EA;
-    border-color: #8A9E84;
-  }
-  .profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  @media (max-width: 700px) {
-    .profile-grid { grid-template-columns: 1fr; }
-  }
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin: 2rem 0;
-  }
-  @media (max-width: 700px) {
-    .two-col { grid-template-columns: 1fr; }
-  }
-  .type-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.5rem;
-  }
-  .type-btn {
-    padding: 0.7rem;
-    border-radius: 40px;
-    border: 1px solid #EDE7D8;
-    background: #FDFAF4;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-  .type-btn.ap { background: rgba(92,114,87,0.12); color: #5C7257; border-color: #D4DFCC; }
-  .type-btn.an { background: rgba(138,158,132,0.12); color: #6B6B5E; }
-  .type-btn.ah { background: rgba(181,106,92,0.12); color: #B56A5C; }
-  .events-list {
-    max-height: 380px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .ev-card {
-    background: #FDFAF4;
-    border: 1px solid #EDE7D8;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    transition: background 0.2s;
-  }
-  .ev-card:hover { background: #F6F2EA; }
-  .ev-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .ev-info { flex: 1; }
-  .ev-name { font-weight: 500; }
-  .ev-age { font-size: 0.75rem; color: #6B6B5E; }
-  .ev-note-btn, .ev-del {
-    background: none;
-    border: 1px solid #EDE7D8;
-    border-radius: 40px;
-    padding: 4px 10px;
-    cursor: pointer;
-  }
-  .ev-del { border: none; font-size: 1.2rem; }
-  .canvas-wrap {
-    overflow-x: auto;
-    margin: 2rem 0;
-    border: 1px solid #EDE7D8;
-    padding: 1rem;
-    background: #FDFAF4;
-  }
-  .insight-grid {
-    display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 1.5rem;
-  }
-  @media (max-width: 600px) { .insight-grid { grid-template-columns: 1fr; } }
-  .insight-card {
-    background: #F6F2EA;
-    padding: 1.25rem;
-    border-radius: 2px;
-  }
-  .insight-badge { font-size: 1.8rem; }
-  .insight-title {
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #8A9E84;
-  }
-  .insight-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem;
-    font-weight: 500;
-  }
-  .reflect-q {
-    padding: 0.8rem 1rem 0.8rem 1.5rem;
-    border-left: 2px solid #5C7257;
-    background: #F6F2EA;
-    margin-bottom: 0.75rem;
-  }
-  .actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin: 2rem 0 1rem;
-    flex-wrap: wrap;
-  }
-  footer {
-    margin-top: 3rem;
-    text-align: center;
-    font-size: 0.75rem;
-    color: #B7B7A8;
-    border-top: 1px solid #EDE7D8;
-    padding-top: 2rem;
-  }
-  .hidden-section {
-    display: none;
-  }
-  .w-full { width: 100%; }
-  input[type="range"] {
-    padding: 0;
-    height: 4px;
-    -webkit-appearance: none;
-    background: #EDE7D8;
-  }
-  input[type="range"]:focus { outline: none; }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #5C7257;
-    border: none;
-    cursor: pointer;
-  }
-  .instr-content {
-    font-size: 0.9rem;
-    color: #6B6B5E;
-    line-height: 1.7;
-    max-width: 52ch;
-  }
-  .instr-content strong {
-    color: #5C7257;
-    font-weight: 500;
-  }
-  .backup-note {
-    font-size: 0.8rem;
-    color: #6B6B5E;
-    text-align: center;
-    margin-top: 0.75rem;
-    border-top: 1px dashed #EDE7D8;
-    padding-top: 0.75rem;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lifeline — Map your story</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='30' width='56' height='4' rx='0' fill='%23000'/%3E%3Ccircle cx='12' cy='32' r='5' fill='%2339FF14'/%3E%3Ccircle cx='28' cy='32' r='5' fill='%2300F0FF'/%3E%3Ccircle cx='44' cy='32' r='5' fill='%23FF0000'/%3E%3Ccircle cx='58' cy='32' r='4' fill='%23FFED00'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500;1,700;1,800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #FDF9F2; color: #000; font-family: 'DM Sans', sans-serif; line-height: 1.7; padding: 2rem 5vw 3rem; }
+        h1, h2, h3, .bebas { font-family: 'Bebas Neue', sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: 0.02em; line-height: 0.9; }
+        h1 { font-size: clamp(3.5rem, 9vw, 6rem); color: #000; letter-spacing: -0.01em; }
+        .subhead { font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; color: #FF5E00; margin-top: 0.25rem; }
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
+        .lang-toggle { display: flex; border: 4px solid #000; background: #fff; }
+        .lang-btn { background: #fff; border: none; padding: 0.5rem 1.2rem; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; color: #000; }
+        .lang-btn:first-child { border-right: 2px solid #000; }
+        .lang-btn.active { background: #FFED00; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2); }
+        .container { max-width: 1280px; margin: 0 auto; }
+        .panel { background: #fff; border: 4px solid #000; padding: 2rem; margin-bottom: 2rem; box-shadow: 4px 4px 0 #000; transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        .panel:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+        .panel-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.08em; color: #000; margin-bottom: 1.5rem; border-left: 6px solid #FFED00; padding-left: 0.75rem; }
+        .field { margin-bottom: 1.5rem; }
+        .field label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #000; display: block; margin-bottom: 0.5rem; }
+        input, select, textarea { width: 100%; background: #fff; border: 3px solid #000; border-radius: 0; padding: 0.75rem 0.9rem; font-size: 0.9rem; color: #000; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #FFED00; box-shadow: 3px 3px 0 #FFED00; }
+        .btn { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; padding: 0.85rem 1.5rem; border-radius: 0; border: 3px solid #000; cursor: pointer; transition: transform 0.1s ease, box-shadow 0.1s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; }
+        .btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #000; }
+        .btn-primary { background: #FFED00; color: #000; box-shadow: 3px 3px 0 #000; animation: pulseBtn 3s ease-in-out infinite; }
+        @keyframes pulseBtn { 0%,100%{transform:scale(1)} 60%{transform:scale(1.03)} }
+        .btn-ghost { background: #fff; color: #000; box-shadow: 3px 3px 0 #000; }
+        .btn-ghost:hover { background: #FFED00; }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        @media (max-width:700px){.profile-grid{grid-template-columns:1fr}}
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
+        @media (max-width:700px){.two-col{grid-template-columns:1fr}}
+        .type-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+        .type-btn { padding: 0.7rem 0.5rem; border: 3px solid #000; background: #fff; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; color: #000; box-shadow: 2px 2px 0 #000; }
+        .type-btn:hover { transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #000; }
+        .type-btn.ap { background: #39FF14; }
+        .type-btn.an { background: #00F0FF; }
+        .type-btn.ah { background: #FF0000; color: #fff; }
+        .events-list { max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+        .ev-card { background: #fff; border: 3px solid #000; padding: 1rem; display: flex; align-items: center; gap: 1rem; box-shadow: 2px 2px 0 #000; }
+        .ev-card:hover { transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #000; }
+        .ev-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid #000; }
+        .ev-info { flex: 1; }
+        .ev-name { font-weight: 700; }
+        .ev-age { font-size: 0.7rem; font-weight: 500; color: #555; text-transform: uppercase; }
+        .ev-note-btn, .ev-del { background: #fff; border: 2px solid #000; padding: 4px 10px; cursor: pointer; font-weight: 700; font-size: 0.75rem; box-shadow: 2px 2px 0 #000; }
+        .ev-del { border: none; font-size: 1.1rem; background: #FF2DF1; color: #fff; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 2px solid #000; box-shadow: 2px 2px 0 #000; padding: 0; }
+        .canvas-wrap { overflow-x: auto; margin: 2rem 0; border: 4px solid #000; padding: 1rem; background: #fff; box-shadow: 4px 4px 0 #000; }
+        .insight-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; }
+        @media (max-width:600px){.insight-grid{grid-template-columns:1fr}}
+        .insight-card { background: #fff; padding: 1.25rem; border: 3px solid #000; box-shadow: 3px 3px 0 #000; }
+        .insight-badge { font-size: 1.6rem; display: inline-block; background: #FFED00; padding: 0.15rem 0.5rem; border: 2px solid #000; margin-bottom: 0.5rem; }
+        .insight-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #FF5E00; margin-bottom: 0.4rem; }
+        .insight-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; text-transform: uppercase; }
+        .reflect-q { padding: 0.8rem 1rem 0.8rem 1.5rem; border-left: 6px solid #FFED00; background: #fff; margin-bottom: 0.75rem; border: 3px solid #000; box-shadow: 2px 2px 0 #000; }
+        .actions { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0 1rem; flex-wrap: wrap; }
+        footer { margin-top: 3rem; text-align: center; background: #000; color: #FFED00; padding: 2rem; border-top: 6px solid #FFED00; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+        .hidden-section { display: none; }
+        .w-full { width: 100%; }
+        input[type="range"] { padding: 0; height: 8px; -webkit-appearance: none; background: #ddd; border: 2px solid #000; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 0; background: #000; border: 3px solid #000; cursor: pointer; box-shadow: 2px 2px 0 #FFED00; }
+        .toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .toggle-chevron { font-size: 1.4rem; font-weight: 700; width: 28px; height: 28px; text-align: center; line-height: 28px; background: #FFED00; border: 2px solid #000; transition: transform 0.15s; }
+        #profileAge { background: #f9f9f9; font-weight: 700; }
+        .intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; gap: 2rem; flex-wrap: wrap; padding: 2rem; }
+        .intro-overlay .btn { font-size: 1.5rem; padding: 1.5rem 3rem; min-width: 180px; background: #FFED00; color: #000; border: 5px solid #000; box-shadow: 6px 6px 0 #000; animation: pulseBtn 2.5s ease-in-out infinite; }
+        .intro-overlay .btn:hover { transform: translate(-4px,-4px); box-shadow: 10px 10px 0 #000; }
+    </style>
 </head>
 <body>
+<div class="intro-overlay" id="introOverlay">
+    <button class="btn btn-primary" onclick="setLanguageAndClose('en')">English</button>
+    <button class="btn btn-primary" onclick="setLanguageAndClose('es')">Español</button>
+</div>
+
 <div class="container">
-  <div class="top-bar">
-    <div>
-      <h1>Lifeline</h1>
-      <div class="subhead" id="globalSubhead">Map the story of your life</div>
-    </div>
-    <div class="lang-group">
-      <button class="lang-btn" id="langEN" onclick="setLanguage('en')">EN</button>
-      <button class="lang-btn" id="langES" onclick="setLanguage('es')">ES</button>
-    </div>
-  </div>
-
-  <!-- Instructions Panel -->
-  <div class="panel">
-    <div style="display:flex; justify-content:space-between; cursor:pointer;" onclick="toggleInstructions()">
-      <div class="panel-label" id="instrTitle" style="margin-bottom:0;">How to use this exercise</div>
-      <span id="instrChevron" style="color:#8A9E84;">▾</span>
-    </div>
-    <div id="instrContent" style="display:none; margin-top:1rem;">
-      <div id="instrBody" class="instr-content"></div>
-    </div>
-  </div>
-
-  <!-- Profile panel (always visible) -->
-  <div class="panel">
-    <div class="panel-label" id="profileLabel">Your profile</div>
-    <div class="profile-grid">
-      <div class="field"><label id="nameLabel">Name</label><input type="text" id="profileName" placeholder="Your name"></div>
-      <div class="field"><label id="dobLabel">Date of birth</label><div style="display:grid; grid-template-columns:1fr 2fr 1.4fr; gap:0.5rem;"><select id="dobDay"></select><select id="dobMonth"></select><select id="dobYear"></select></div></div>
-      <div class="field"><label id="ageLabel">Current age</label><input type="number" id="profileAge" readonly placeholder="Auto-calculated" style="background:#F6F2EA;"></div>
-    </div>
-    <button class="btn btn-primary w-full" id="beginBtn">Begin</button>
-  </div>
-
-  <!-- Main app (hidden until Begin) -->
-  <div id="mainApp" class="hidden-section">
-    <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="350"></canvas></div>
-
-    <div class="two-col">
-      <div class="panel">
-        <div class="panel-label" id="addEventLabel">Add event</div>
-        <div class="field"><label id="descLabel">Description</label><input type="text" id="eventDesc" placeholder="What happened?"></div>
-        <div class="field"><label id="ageSliderLabel">Age <span id="ageDisplay">0</span></label><input type="range" min="0" max="100" step="1" value="0" id="eventAge" oninput="updateAgeSlider(this.value)"></div>
-        <div class="field"><label id="typeLabel">Type</label><div class="type-group"><button type="button" class="type-btn" onclick="setEventType('positive')" id="typePosBtn">Positive</button><button type="button" class="type-btn an" onclick="setEventType('neutral')" id="typeNeuBtn">Neutral</button><button type="button" class="type-btn" onclick="setEventType('hard')" id="typeHardBtn">Challenging</button></div></div>
-        <div class="field"><label id="noteLabel">Note <span style="font-weight:400;">(optional)</span></label><textarea id="eventNote" rows="2" placeholder="Add a private reflection..."></textarea></div>
-        <button class="btn btn-primary w-full" id="addEventBtn">Add to lifeline</button>
-      </div>
-      <div class="panel">
-        <div class="panel-label" id="eventsListLabel">Events <span id="eventCount"></span></div>
-        <div class="events-list" id="eventsList"><div id="eventsEmptyMsg">No events yet. Add your first one!</div></div>
-      </div>
+    <div class="top-bar">
+        <div>
+            <h1>Lifeline</h1>
+            <div class="subhead" id="globalSubhead">Map the story of your life</div>
+        </div>
+        <div class="lang-toggle">
+            <button class="lang-btn" id="langEN" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" id="langES" onclick="setLanguage('es')">ES</button>
+        </div>
     </div>
 
     <div class="panel">
-      <div class="panel-label" id="insightsLabel">Your story at a glance</div>
-      <div id="insightsBody"><div style="font-style:italic; color:#B7B7A8;" id="insightsPlaceholder">Add events to see insights.</div></div>
+        <div class="toggle-header" onclick="toggleInstructions()">
+            <div class="panel-label" id="instrTitle">How to use this exercise</div>
+            <span class="toggle-chevron" id="instrChevron">+</span>
+        </div>
+        <div id="instrContent" style="display:none; margin-top:1.25rem;">
+            <div id="instrBody" class="instr-content"></div>
+        </div>
     </div>
 
     <div class="panel">
-      <div style="display:flex; justify-content:space-between; cursor:pointer;" onclick="toggleReflections()">
-        <div class="panel-label" id="reflectLabel" style="margin-bottom:0;">Reflection questions</div>
-        <span id="reflectChevron" style="color:#8A9E84;">▾</span>
-      </div>
-      <div id="reflectContent" style="display:none; margin-top:1rem;"><div id="reflectBody"></div></div>
+        <div class="panel-label" id="profileLabel">Your profile</div>
+        <div class="profile-grid">
+            <div class="field"><label id="nameLabel">Name</label><input type="text" id="profileName" placeholder="Your name"></div>
+            <div class="field"><label id="dobLabel">Date of birth</label>
+                <div style="display:grid; grid-template-columns:1fr 2fr 1.4fr; gap:0.5rem;">
+                    <select id="dobDay"></select><select id="dobMonth"></select><select id="dobYear"></select>
+                </div>
+            </div>
+            <div class="field"><label id="ageLabel">Current age</label><input type="number" id="profileAge" readonly placeholder="Auto-calculated"></div>
+        </div>
+        <button class="btn btn-primary w-full" id="beginBtn">Begin</button>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-ghost" id="resetBtn">↺ Reset everything</button>
-      <button class="btn btn-primary" id="downloadBtn">Download PDF ↓</button>
-    </div>
-  </div>
+    <div id="mainApp" class="hidden-section">
+        <div class="canvas-wrap"><canvas id="lifelineCanvas" width="800" height="350"></canvas></div>
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-label" id="addEventLabel">Add event</div>
+                <div class="field"><label id="descLabel">Description</label><input type="text" id="eventDesc" placeholder="What happened?"></div>
+                <div class="field"><label id="ageSliderLabel">Age <span id="ageDisplay">0</span></label><input type="range" min="0" max="100" step="1" value="0" id="eventAge" oninput="updateAgeSlider(this.value)"></div>
+                <div class="field"><label id="typeLabel">Type</label>
+                    <div class="type-group">
+                        <button type="button" class="type-btn" onclick="setEventType('positive')" id="typePosBtn">Positive</button>
+                        <button type="button" class="type-btn an" onclick="setEventType('neutral')" id="typeNeuBtn">Neutral</button>
+                        <button type="button" class="type-btn" onclick="setEventType('hard')" id="typeHardBtn">Challenging</button>
+                    </div>
+                </div>
+                <div class="field"><label id="noteLabel">Note <span style="font-weight:400;">(optional)</span></label><textarea id="eventNote" rows="2" placeholder="Add a private reflection..."></textarea></div>
+                <button class="btn btn-primary w-full" id="addEventBtn">Add to lifeline</button>
+            </div>
+            <div class="panel">
+                <div class="panel-label" id="eventsListLabel">Events <span id="eventCount"></span></div>
+                <div class="events-list" id="eventsList"><div id="eventsEmptyMsg">No events yet. Add your first one!</div></div>
+            </div>
+        </div>
 
-  <!-- Backup section (always visible, with instructions) -->
-  <div class="panel" style="margin-top: 1rem;">
-    <div class="panel-label" id="backupLabel">Backup & restore</div>
-    <div class="actions" style="margin: 0 0 1rem 0; gap: 1rem;">
-      <button class="btn btn-ghost" id="exportBtn">⬇ Export backup (JSON)</button>
-      <label class="btn btn-ghost" style="cursor:pointer;">⬆ Import backup<input type="file" id="importFile" accept=".json" style="display:none"></label>
-    </div>
-    <div id="backupInstructions" class="backup-note" style="text-align: left; font-size: 0.85rem;"></div>
-  </div>
+        <div class="panel">
+            <div class="panel-label" id="insightsLabel">Your story at a glance</div>
+            <div id="insightsBody"><div id="insightsPlaceholder">Add events to see insights.</div></div>
+        </div>
 
-  <footer>Made with love by Juanjo & Vanessa ❤️<br>CaFi — Tools by psychologists for psychologists</footer>
+        <div class="panel">
+            <div class="toggle-header" onclick="toggleReflections()">
+                <div class="panel-label" id="reflectLabel">Reflection questions</div>
+                <span class="toggle-chevron" id="reflectChevron">+</span>
+            </div>
+            <div id="reflectContent" style="display:none; margin-top:1.25rem;"><div id="reflectBody"></div></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-ghost" id="resetBtn">↺ Reset everything</button>
+            <button class="btn btn-primary" id="downloadBtn">Download PDF ↓</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-label" id="backupLabel">Backup & restore</div>
+        <div class="actions" style="margin:0 0 1rem 0;">
+            <button class="btn btn-ghost" id="exportBtn">⬇ Export backup (JSON)</button>
+            <label class="btn btn-ghost" id="importLabelBtn" style="cursor:pointer;">⬆ Import backup<input type="file" id="importFile" accept=".json" style="display:none"></label>
+        </div>
+        <div id="backupInstructions" class="backup-note"></div>
+    </div>
+    <footer>Made with love by Juanjo & Vanessa ❤️<br>CaFi — Tools by psychologists for psychologists</footer>
 </div>
 
 <script>
-  // ---------- FULL TRANSLATIONS ----------
-  const LANGS = {
-    en: {
-      globalSubhead: 'Map the story of your life',
-      instrTitle: 'How to use this exercise',
-      instrBody: '<strong>The Lifeline exercise</strong> helps you visualise the journey of your life — the highs, the lows, and the turning points that have shaped who you are today.<br><br><strong>How to do it:</strong><br>1. Enter your name, date of birth, and current age (auto-calculated), then tap <strong>Begin</strong>.<br>2. Think back over your life and identify key events — moments of joy, loss, change, achievement, or challenge.<br>3. For each event, write a short description, set the age at which it happened, and choose its type: Positive (green), Neutral (sage), or Challenging (terracotta).<br>4. Tap "Add to lifeline" — the event appears as a dot on your timeline.<br>5. When you are done, download your PDF to keep or share your Lifeline.<br><br>There are no right or wrong answers. Be honest with yourself — the more genuine your reflection, the more powerful the exercise.',
-      profileLabel: 'Your profile', nameLabel: 'Name', dobLabel: 'Date of birth', ageLabel: 'Current age', begin: 'Begin',
-      addEventLabel: 'Add event', descLabel: 'Description', ageSliderLabel: 'Age', typeLabel: 'Type', noteLabel: 'Note',
-      eventsListLabel: 'Events', insightsLabel: 'Your story at a glance', reflectLabel: 'Reflection questions',
-      positive: 'Positive', neutral: 'Neutral', challenging: 'Challenging', addBtn: 'Add to lifeline',
-      reset: '↺ Reset everything', download: 'Download PDF ↓', noEvents: 'No events yet. Add your first one!',
-      alertProfile: 'Please fill your name and date of birth.', alertDesc: 'Please enter a description.',
-      peakTitle: 'Strongest period', valleyTitle: 'Most challenging period', peakNone: 'Add more positive events', valleyNone: 'No notable challenging periods', peakUnit: 'around age', balanceTitle: 'Balance', totalTitle: 'Total events',
-      backupLabel: 'Backup & restore',
-      backupInstructions: '💾 Your data is saved automatically in your browser. To keep it safe:<br>• Click <strong>Export backup</strong> to download a .json file — save it on your computer, phone, or cloud drive.<br>• To restore later, click <strong>Import backup</strong> and select the file.<br>⚠️ Important: Clearing your browser cache will erase your data. Always keep a backup!',
-      importSuccess: 'Backup restored successfully! Click "Begin" to continue editing.',
-      reflectQs: {
-        manyPositive: ['What patterns do you notice in your best moments?', 'What conditions helped create your happiest periods?', 'How can you recreate more of those moments today?'],
-        manyChallenging: ['What strengths helped you get through your most difficult times?', 'What did you learn from your hardest experiences?', 'Is there a challenging period you have not fully processed yet?'],
-        mixed: ['What is the relationship between your highs and lows?', 'Do your challenging events tend to cluster around certain life areas?', 'Which event on your timeline had the biggest impact on who you are today?'],
-        few: ['What events are missing from your timeline that shaped you?', 'Are there events you find difficult to add — and what does that tell you?', 'If you could go back to one moment on your line, which would it be?']
-      }
-    },
-    es: {
-      globalSubhead: 'Traza la historia de tu vida',
-      instrTitle: 'Cómo usar este ejercicio',
-      instrBody: '<strong>El ejercicio de la Línea de Vida</strong> te ayuda a visualizar el recorrido de tu vida — los momentos altos, los bajos y los puntos de inflexión que te han convertido en quien eres hoy.<br><br><strong>Cómo hacerlo:</strong><br>1. Escribe tu nombre, fecha de nacimiento y edad actual (se calcula automáticamente), luego toca <strong>Comenzar</strong>.<br>2. Reflexiona sobre tu vida e identifica los eventos clave — momentos de alegría, pérdida, cambio, logro o desafío.<br>3. Para cada evento, escribe una descripción breve, define la edad en que ocurrió y elige su tipo: Positivo (verde), Neutral (salvia) o Desafiante (terracota).<br>4. Toca "Agregar a la línea" — el evento aparecerá como un punto en tu línea de vida.<br>5. Cuando termines, descarga tu PDF para guardar o compartir tu Línea de Vida.<br><br>No hay respuestas correctas ni incorrectas. Sé honesto contigo mismo — cuanto más genuina sea tu reflexión, más poderoso será el ejercicio.',
-      profileLabel: 'Tu perfil', nameLabel: 'Nombre', dobLabel: 'Fecha de nacimiento', ageLabel: 'Edad actual', begin: 'Comenzar',
-      addEventLabel: 'Agregar evento', descLabel: 'Descripción', ageSliderLabel: 'Edad', typeLabel: 'Tipo', noteLabel: 'Nota',
-      eventsListLabel: 'Eventos', insightsLabel: 'Tu historia de un vistazo', reflectLabel: 'Preguntas de reflexión',
-      positive: 'Positivo', neutral: 'Neutral', challenging: 'Desafiante', addBtn: 'Agregar a la línea',
-      reset: '↺ Reiniciar todo', download: 'Descargar PDF ↓', noEvents: 'Aún no hay eventos. ¡Agrega el primero!',
-      alertProfile: 'Por favor completa tu nombre y fecha de nacimiento.', alertDesc: 'Por favor escribe una descripción.',
-      peakTitle: 'Período más positivo', valleyTitle: 'Período más desafiante', peakNone: 'Agrega más eventos positivos', valleyNone: 'No se detectaron períodos desafiantes', peakUnit: 'alrededor de los', balanceTitle: 'Equilibrio', totalTitle: 'Total eventos',
-      backupLabel: 'Copia de seguridad',
-      backupInstructions: '💾 Tus datos se guardan automáticamente en el navegador. Para mantenerlos seguros:<br>• Haz clic en <strong>Exportar copia</strong> para descargar un archivo .json — guárdalo en tu ordenador, móvil o nube.<br>• Para restaurar más tarde, haz clic en <strong>Importar copia</strong> y selecciona el archivo.<br>⚠️ Importante: Borrar la caché del navegador borrará tus datos. ¡Guarda siempre una copia de seguridad!',
-      importSuccess: '¡Copia restaurada con éxito! Haz clic en "Comenzar" para continuar editando.',
-      reflectQs: {
-        manyPositive: ['¿Qué patrones notas en tus mejores momentos?', '¿Qué condiciones ayudaron a crear tus períodos más felices?', '¿Cómo puedes recrear más de esos momentos hoy?'],
-        manyChallenging: ['¿Qué fortalezas te ayudaron a superar tus momentos más difíciles?', '¿Qué aprendiste de tus experiencias más duras?', '¿Hay algún período difícil que aún no hayas procesado del todo?'],
-        mixed: ['¿Cuál es la relación entre tus momentos altos y bajos?', '¿Tus eventos desafiantes tienden a agruparse en ciertas áreas?', '¿Qué evento de tu línea tuvo el mayor impacto en quien eres hoy?'],
-        few: ['¿Qué eventos faltan en tu línea que te hayan marcado?', '¿Hay eventos que te resulta difícil agregar — y qué dice eso de ti?', 'Si pudieras volver a un momento de tu línea, ¿cuál sería?']
-      }
-    }
-  };
-
-  let lang = 'en';
-  let profile = { name: '', age: 0, dob: '' };
-  let events = [];
-  let nextId = 1;
-  let selectedType = 'neutral';
-  let reflectOpen = false;
-  let instrOpen = false;
-  const EVENT_COLORS = { positive: '#5C7257', neutral: '#8A9E84', hard: '#B56A5C' };
-
-  // DOM elements
-  const mainApp = document.getElementById('mainApp');
-  const beginBtn = document.getElementById('beginBtn');
-  const profileName = document.getElementById('profileName');
-  const profileAge = document.getElementById('profileAge');
-  const dobDay = document.getElementById('dobDay');
-  const dobMonth = document.getElementById('dobMonth');
-  const dobYear = document.getElementById('dobYear');
-  const eventDesc = document.getElementById('eventDesc');
-  const eventAgeSlider = document.getElementById('eventAge');
-  const ageDisplay = document.getElementById('ageDisplay');
-  const eventNote = document.getElementById('eventNote');
-  const addEventBtn = document.getElementById('addEventBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const importFile = document.getElementById('importFile');
-
-  // Helper: auto-calc age from dob
-  function calculateAge() {
-    let day = dobDay.value, month = dobMonth.value, year = dobYear.value;
-    if (day && month && year) {
-      let birthDate = new Date(year, month-1, day);
-      let today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      let m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-      if (age >= 0 && age <= 120) profileAge.value = age;
-      else profileAge.value = '';
-    } else profileAge.value = '';
-  }
-  function initDateSelects() {
-    let months = lang === 'es' ? ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] : ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    dobDay.innerHTML = '<option value="">'+(lang==='es'?'Día':'Day')+'</option>';
-    for(let d=1;d<=31;d++) dobDay.innerHTML += `<option value="${d}">${d}</option>`;
-    dobMonth.innerHTML = '<option value="">'+(lang==='es'?'Mes':'Month')+'</option>';
-    months.forEach((m,i)=> dobMonth.innerHTML += `<option value="${i+1}">${m}</option>`);
-    let curYear = new Date().getFullYear();
-    dobYear.innerHTML = '<option value="">'+(lang==='es'?'Año':'Year')+'</option>';
-    for(let y=curYear; y>=curYear-110; y--) dobYear.innerHTML += `<option value="${y}">${y}</option>`;
-    dobDay.onchange = calculateAge;
-    dobMonth.onchange = calculateAge;
-    dobYear.onchange = calculateAge;
-  }
-
-  // Instructions toggle
-  function toggleInstructions() {
-    instrOpen = !instrOpen;
-    document.getElementById('instrContent').style.display = instrOpen ? 'block' : 'none';
-    document.getElementById('instrChevron').style.transform = instrOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-  }
-
-  // Apply language to all UI elements
-  function applyLanguage() {
-    const t = LANGS[lang];
-    document.getElementById('globalSubhead').innerText = t.globalSubhead;
-    document.getElementById('instrTitle').innerText = t.instrTitle;
-    document.getElementById('instrBody').innerHTML = t.instrBody;
-    document.getElementById('profileLabel').innerText = t.profileLabel;
-    document.getElementById('nameLabel').innerText = t.nameLabel;
-    document.getElementById('dobLabel').innerText = t.dobLabel;
-    document.getElementById('ageLabel').innerText = t.ageLabel;
-    beginBtn.innerText = t.begin;
-    document.getElementById('profileName').placeholder = t.nameLabel;
-    if (!mainApp.classList.contains('hidden-section')) {
-      document.getElementById('addEventLabel').innerText = t.addEventLabel;
-      document.getElementById('descLabel').innerText = t.descLabel;
-      document.getElementById('ageSliderLabel').childNodes[0].nodeValue = t.ageSliderLabel + ' ';
-      document.getElementById('typeLabel').innerText = t.typeLabel;
-      document.getElementById('noteLabel').innerHTML = t.noteLabel + ' <span style="font-weight:400;">(optional)</span>';
-      document.getElementById('typePosBtn').innerText = t.positive;
-      document.getElementById('typeNeuBtn').innerText = t.neutral;
-      document.getElementById('typeHardBtn').innerText = t.challenging;
-      document.getElementById('addEventBtn').innerText = t.addBtn;
-      document.getElementById('eventsListLabel').innerHTML = t.eventsListLabel + ' <span id="eventCount"></span>';
-      document.getElementById('insightsLabel').innerText = t.insightsLabel;
-      document.getElementById('reflectLabel').innerText = t.reflectLabel;
-      resetBtn.innerText = t.reset;
-      downloadBtn.innerText = t.download;
-      document.getElementById('eventsEmptyMsg').innerText = t.noEvents;
-    }
-    document.getElementById('eventDesc').placeholder = t.descLabel;
-    document.getElementById('eventNote').placeholder = 'Add a private reflection...';
-    document.getElementById('backupLabel').innerText = t.backupLabel;
-    document.getElementById('exportBtn').innerText = '⬇ Export backup (JSON)';
-    document.querySelector('label.btn-ghost').innerHTML = '⬆ Import backup<input type="file" id="importFile" accept=".json" style="display:none">';
-    document.getElementById('backupInstructions').innerHTML = t.backupInstructions;
-    renderEventsList();
-    drawLifeline();
-    refreshInsights();
-    if (reflectOpen) renderReflect();
-    initDateSelects();
-  }
-  function setLanguage(l) {
-    lang = l;
-    document.getElementById('langEN').classList.toggle('active', l==='en');
-    document.getElementById('langES').classList.toggle('active', l==='es');
-    applyLanguage();
-  }
-
-  // Event management
-  function setEventType(type) {
-    selectedType = type;
-    document.getElementById('typePosBtn').className = 'type-btn' + (type==='positive' ? ' ap' : '');
-    document.getElementById('typeNeuBtn').className = 'type-btn' + (type==='neutral' ? ' an' : '');
-    document.getElementById('typeHardBtn').className = 'type-btn' + (type==='hard' ? ' ah' : '');
-    updateSliderColor();
-  }
-  function updateSliderColor() {
-    let color = EVENT_COLORS[selectedType];
-    let sl = eventAgeSlider;
-    let val = sl.value, max = sl.max;
-    let percent = (val/max)*100;
-    sl.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #EDE7D8 ${percent}%, #EDE7D8 100%)`;
-  }
-  function updateAgeSlider(val) {
-    ageDisplay.innerText = val;
-    updateSliderColor();
-  }
-  function addEvent() {
-    const t = LANGS[lang];
-    if (!profile.name || !profile.age) { alert(t.alertProfile); return; }
-    let desc = eventDesc.value.trim();
-    if (!desc) { alert(t.alertDesc); return; }
-    let age = parseInt(eventAgeSlider.value);
-    let note = eventNote.value.trim();
-    events.push({ id: nextId++, description: desc, age, type: selectedType, note });
-    events.sort((a,b)=>a.age-b.age);
-    eventDesc.value = '';
-    eventNote.value = '';
-    renderEventsList();
-    drawLifeline();
-    refreshInsights();
-    if (reflectOpen) renderReflect();
-    saveToLocal();
-  }
-  function deleteEvent(id) {
-    events = events.filter(e=>e.id !== id);
-    renderEventsList();
-    drawLifeline();
-    refreshInsights();
-    if (reflectOpen) renderReflect();
-    saveToLocal();
-  }
-  function renderEventsList() {
-    const t = LANGS[lang];
-    let el = document.getElementById('eventsList');
-    let cntSpan = document.getElementById('eventCount');
-    if (cntSpan) cntSpan.innerText = events.length ? `(${events.length})` : '';
-    if (events.length === 0) {
-      el.innerHTML = `<div id="eventsEmptyMsg">${t.noEvents}</div>`;
-      return;
-    }
-    el.innerHTML = events.map(e => {
-      let color = EVENT_COLORS[e.type];
-      let typeText = e.type==='positive' ? t.positive : (e.type==='neutral' ? t.neutral : t.challenging);
-      let noteSnip = e.note ? `<div style="font-size:0.7rem;color:#6B6B5E;">${e.note.substring(0,60)}${e.note.length>60?'…':''}</div>` : '';
-      let noteBtn = e.note ? `<button class="ev-note-btn" onclick="alert('📓 ${e.description}\\n\\n${e.note}')">📓</button>` : '';
-      return `<div class="ev-card"><span class="ev-dot" style="background:${color}"></span><div class="ev-info"><div class="ev-name">${e.description}</div><div class="ev-age">${t.ageSliderLabel} ${e.age} · ${typeText}</div>${noteSnip}</div>${noteBtn}<button class="ev-del" onclick="deleteEvent(${e.id})">✕</button></div>`;
-    }).join('');
-  }
-
-  // Improved canvas with advanced collision avoidance using multiple lanes
-  function drawLifeline() {
-    let canvas = document.getElementById('lifelineCanvas');
-    let ctx = canvas.getContext('2d');
-    if (!profile.age || profile.age < 1 || events.length === 0) {
-      canvas.width = 800; canvas.height = 200;
-      ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,800,200);
-      ctx.fillStyle = '#B7B7A8'; ctx.font = '14px "DM Sans"'; ctx.fillText(LANGS[lang].peakNone, 400, 100);
-      return;
-    }
-    let W = Math.max(1000, profile.age * 26 + 180);
-    let H = Math.max(350, 200 + events.length * 12);
-    canvas.width = W; canvas.height = H;
-    ctx.fillStyle = '#FDFAF4'; ctx.fillRect(0,0,W,H);
-    let startX = 80, endX = W-80, yLine = 140;
-    ctx.beginPath(); ctx.moveTo(startX, yLine); ctx.lineTo(endX, yLine); ctx.strokeStyle = '#5C7257'; ctx.lineWidth = 2; ctx.stroke();
-    for (let age = 10; age <= profile.age; age += 10) {
-      let x = startX + (age/profile.age)*(endX-startX);
-      ctx.beginPath(); ctx.moveTo(x, yLine-8); ctx.lineTo(x, yLine+8); ctx.strokeStyle = '#EDE7D8'; ctx.stroke();
-      ctx.fillStyle = '#6B6B5E'; ctx.font = '10px "DM Sans"'; ctx.fillText(age, x-5, yLine+18);
-    }
-    // Multi-lane label placement (above and below with multiple rows)
-    let lanesAbove = [];
-    let lanesBelow = [];
-    let laneHeight = 22;
-    let maxLanes = 6;
-    for (let i=0; i<maxLanes; i++) { lanesAbove.push([]); lanesBelow.push([]); }
-    events.forEach(ev => {
-      let x = startX + (ev.age/profile.age)*(endX-startX);
-      let label = ev.description.length > 22 ? ev.description.substring(0,20)+'…' : ev.description;
-      let textWidth = ctx.measureText(label).width + 12;
-      // try to place above first, then below
-      let placed = false;
-      for (let lane=0; lane<maxLanes; lane++) {
-        let yOffset = - (lane+1) * laneHeight - 15;
-        let yPos = yLine + yOffset;
-        let collides = lanesAbove[lane].some(ex => Math.abs(ex.x - x) < (textWidth/2 + ex.w/2) && Math.abs(ex.y - yPos) < laneHeight);
-        if (!collides) {
-          lanesAbove[lane].push({ x, w: textWidth, y: yPos });
-          ev._labelX = x; ev._labelY = yPos; ev._labelText = label; ev._side = 'above';
-          placed = true;
-          break;
+    const LANGS = {
+        en: {
+            globalSubhead: 'Map the story of your life',
+            instrTitle: 'How to use this exercise',
+            instrBody: '<strong>The Lifeline exercise</strong> helps you visualise the journey of your life — the highs, the lows, and the turning points that have shaped who you are today.<br><br><strong>How to do it:</strong><br>1. Enter your name, date of birth, and current age (auto-calculated), then tap <strong>Begin</strong>.<br>2. Think back over your life and identify key events — moments of joy, loss, change, achievement, or challenge.<br>3. For each event, write a short description, set the age at which it happened, and choose its type: Positive (green), Neutral (cyan), or Challenging (red).<br>4. Tap "Add to lifeline" — the event appears as a dot on your timeline.<br>5. When you are done, download your PDF to keep or share your Lifeline.<br><br>There are no right or wrong answers. Be honest with yourself — the more genuine your reflection, the more powerful the exercise.',
+            profileLabel: 'Your profile', nameLabel: 'Name', dobLabel: 'Date of birth', ageLabel: 'Current age', begin: 'Begin',
+            addEventLabel: 'Add event', descLabel: 'Description', ageSliderLabel: 'Age', typeLabel: 'Type', noteLabel: 'Note',
+            eventsListLabel: 'Events', insightsLabel: 'Your story at a glance', reflectLabel: 'Reflection questions',
+            positive: 'Positive', neutral: 'Neutral', challenging: 'Challenging', addBtn: 'Add to lifeline',
+            reset: '↺ Reset everything', download: 'Download PDF ↓', noEvents: 'No events yet. Add your first one!',
+            alertProfile: 'Please fill your name and date of birth.', alertDesc: 'Please enter a description.',
+            peakTitle: 'Strongest period', valleyTitle: 'Most challenging period', peakNone: 'Add more positive events', valleyNone: 'No notable challenging periods', peakUnit: 'around age',
+            balanceTitle: 'Balance', totalTitle: 'Total events',
+            backupLabel: 'Backup & restore',
+            exportBtnText: '⬇ Export backup (JSON)',
+            importBtnText: '⬆ Import backup',
+            backupInstructions: '💾 Your data is saved automatically in your browser. To keep it safe:<br>• Click <strong>Export backup</strong> to download a .json file — save it on your computer, phone, or cloud drive.<br>• To restore later, click <strong>Import backup</strong> and select the file.<br>⚠️ Important: Clearing your browser cache will erase your data. Always keep a backup!',
+            importSuccess: 'Backup restored successfully! Click "Begin" to continue editing.',
+            reflectQs: {
+                manyPositive: ['What patterns do you notice in your best moments?','What conditions helped create your happiest periods?','How can you recreate more of those moments today?'],
+                manyChallenging: ['What strengths helped you get through your most difficult times?','What did you learn from your hardest experiences?','Is there a challenging period you have not fully processed yet?'],
+                mixed: ['What is the relationship between your highs and lows?','Do your challenging events tend to cluster around certain life areas?','Which event on your timeline had the biggest impact on who you are today?'],
+                few: ['What events are missing from your timeline that shaped you?','Are there events you find difficult to add — and what does that tell you?','If you could go back to one moment on your line, which would it be?']
+            }
+        },
+        es: {
+            globalSubhead: 'Traza la historia de tu vida',
+            instrTitle: 'Cómo usar este ejercicio',
+            instrBody: '<strong>El ejercicio de la Línea de Vida</strong> te ayuda a visualizar el recorrido de tu vida — los momentos altos, los bajos y los puntos de inflexión que te han convertido en quien eres hoy.<br><br><strong>Cómo hacerlo:</strong><br>1. Escribe tu nombre, fecha de nacimiento y edad actual (se calcula automáticamente), luego toca <strong>Comenzar</strong>.<br>2. Reflexiona sobre tu vida e identifica los eventos clave — momentos de alegría, pérdida, cambio, logro o desafío.<br>3. Para cada evento, escribe una descripción breve, define la edad en que ocurrió y elige su tipo: Positivo (verde), Neutral (cyan) o Desafiante (rojo).<br>4. Toca "Agregar a la línea" — el evento aparecerá como un punto en tu línea de vida.<br>5. Cuando termines, descarga tu PDF para guardar o compartir tu Línea de Vida.<br><br>No hay respuestas correctas ni incorrectas. Sé honesto contigo mismo — cuanto más genuina sea tu reflexión, más poderoso será el ejercicio.',
+            profileLabel: 'Tu perfil', nameLabel: 'Nombre', dobLabel: 'Fecha de nacimiento', ageLabel: 'Edad actual', begin: 'Comenzar',
+            addEventLabel: 'Agregar evento', descLabel: 'Descripción', ageSliderLabel: 'Edad', typeLabel: 'Tipo', noteLabel: 'Nota',
+            eventsListLabel: 'Eventos', insightsLabel: 'Tu historia de un vistazo', reflectLabel: 'Preguntas de reflexión',
+            positive: 'Positivo', neutral: 'Neutral', challenging: 'Desafiante', addBtn: 'Agregar a la línea',
+            reset: '↺ Reiniciar todo', download: 'Descargar PDF ↓', noEvents: 'Aún no hay eventos. ¡Agrega el primero!',
+            alertProfile: 'Por favor completa tu nombre y fecha de nacimiento.', alertDesc: 'Por favor escribe una descripción.',
+            peakTitle: 'Período más positivo', valleyTitle: 'Período más desafiante', peakNone: 'Agrega más eventos positivos', valleyNone: 'No se detectaron períodos desafiantes', peakUnit: 'alrededor de los',
+            balanceTitle: 'Equilibrio', totalTitle: 'Total eventos',
+            backupLabel: 'Copia de seguridad',
+            exportBtnText: '⬇ Exportar copia (JSON)',
+            importBtnText: '⬆ Importar copia',
+            backupInstructions: '💾 Tus datos se guardan automáticamente en el navegador. Para mantenerlos seguros:<br>• Haz clic en <strong>Exportar copia</strong> para descargar un archivo .json — guárdalo en tu ordenador, móvil o nube.<br>• Para restaurar más tarde, haz clic en <strong>Importar copia</strong> y selecciona el archivo.<br>⚠️ Importante: Borrar la caché del navegador borrará tus datos. ¡Guarda siempre una copia de seguridad!',
+            importSuccess: '¡Copia restaurada con éxito! Haz clic en "Comenzar" para continuar editando.',
+            reflectQs: {
+                manyPositive: ['¿Qué patrones notas en tus mejores momentos?','¿Qué condiciones ayudaron a crear tus períodos más felices?','¿Cómo puedes recrear más de esos momentos hoy?'],
+                manyChallenging: ['¿Qué fortalezas te ayudaron a superar tus momentos más difíciles?','¿Qué aprendiste de tus experiencias más duras?','¿Hay algún período difícil que aún no hayas procesado del todo?'],
+                mixed: ['¿Cuál es la relación entre tus momentos altos y bajos?','¿Tus eventos desafiantes tienden a agruparse en ciertas áreas?','¿Qué evento de tu línea tuvo el mayor impacto en quien eres hoy?'],
+                few: ['¿Qué eventos faltan en tu línea que te hayan marcado?','¿Hay eventos que te resulta difícil agregar — y qué dice eso de ti?','Si pudieras volver a un momento de tu línea, ¿cuál sería?']
+            }
         }
-      }
-      if (!placed) {
-        for (let lane=0; lane<maxLanes; lane++) {
-          let yOffset = (lane+1) * laneHeight + 20;
-          let yPos = yLine + yOffset;
-          let collides = lanesBelow[lane].some(ex => Math.abs(ex.x - x) < (textWidth/2 + ex.w/2) && Math.abs(ex.y - yPos) < laneHeight);
-          if (!collides) {
-            lanesBelow[lane].push({ x, w: textWidth, y: yPos });
-            ev._labelX = x; ev._labelY = yPos; ev._labelText = label; ev._side = 'below';
-            placed = true;
-            break;
-          }
-        }
-      }
-      if (!placed) {
-        // fallback: place at the last possible lane
-        ev._labelX = x; ev._labelY = yLine - 15; ev._labelText = label;
-      }
-    });
-    // Draw stems and dots
-    events.forEach(ev => {
-      let yLabel = ev._labelY;
-      let dir = yLabel < yLine ? -1 : 1;
-      ctx.beginPath(); ctx.moveTo(ev._labelX, yLine + (dir * 5)); ctx.lineTo(ev._labelX, yLabel - (dir * 5)); ctx.strokeStyle = EVENT_COLORS[ev.type]; ctx.lineWidth = 1.2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(ev._labelX, yLine, 7, 0, 2*Math.PI); ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
-      ctx.fillStyle = '#2A2A25'; ctx.font = '11px "DM Sans"'; ctx.fillText(ev._labelText, ev._labelX - ctx.measureText(ev._labelText).width/2, ev._labelY);
-      ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.font = '9px "DM Sans"'; ctx.fillText(ev.age, ev._labelX - 12, ev._labelY + (ev._labelY < yLine ? 14 : -4));
-    });
-    ctx.fillStyle = '#5C7257'; ctx.font = 'bold 10px "DM Sans"'; ctx.fillText('0', startX-10, yLine+18); ctx.fillText(profile.age, endX+5, yLine+18);
-  }
-
-  // Insights & Reflections
-  function refreshInsights() {
-    const t = LANGS[lang];
-    let body = document.getElementById('insightsBody');
-    if (events.length < 2) { body.innerHTML = `<div style="font-style:italic;color:#B7B7A8;">${t.peakNone}</div>`; return; }
-    let pos = events.filter(e=>e.type==='positive'), hard = events.filter(e=>e.type==='hard');
-    let total = events.length, posCount=pos.length, hardCount=hard.length, neuCount=total-posCount-hardCount;
-    let peakAge=null, peakCount=0; for(let a=0;a<=profile.age;a++){ let c=pos.filter(e=>e.age>=a&&e.age<=a+10).length; if(c>peakCount){peakCount=c;peakAge=a;} }
-    let valleyAge=null, valleyCount=0; for(let a=0;a<=profile.age;a++){ let c=hard.filter(e=>e.age>=a&&e.age<=a+10).length; if(c>valleyCount){valleyCount=c;valleyAge=a;} }
-    let posBar=Math.round((posCount/total)*100), hardBar=Math.round((hardCount/total)*100), neuBar=100-posBar-hardBar;
-    body.innerHTML = `<div class="insight-grid">
-      <div class="insight-card"><div class="insight-badge">✨</div><div class="insight-title">${t.peakTitle}</div><div class="insight-value">${peakAge!==null?t.peakUnit+' '+peakAge+'–'+(peakAge+10):t.peakNone}</div></div>
-      <div class="insight-card"><div class="insight-badge">🌊</div><div class="insight-title">${t.valleyTitle}</div><div class="insight-value">${valleyAge!==null?t.peakUnit+' '+valleyAge+'–'+(valleyAge+10):t.valleyNone}</div></div>
-      <div class="insight-card"><div class="insight-badge">⚖️</div><div class="insight-title">${t.balanceTitle}</div><div style="display:flex;height:6px;border-radius:40px;margin:6px 0"><div style="width:${posBar}%;background:#5C7257"></div><div style="width:${neuBar}%;background:#8A9E84"></div><div style="width:${hardBar}%;background:#B56A5C"></div></div><div><span style="color:#5C7257">${posCount} pos</span> <span style="color:#8A9E84">${neuCount} neu</span> <span style="color:#B56A5C">${hardCount} chal</span></div></div>
-      <div class="insight-card"><div class="insight-badge">📍</div><div class="insight-title">${t.totalTitle}</div><div class="insight-value" style="font-size:2rem;">${total}</div></div>
-    </div>`;
-  }
-  function renderReflect() {
-    const t = LANGS[lang];
-    let body = document.getElementById('reflectBody');
-    if (events.length < 2) { body.innerHTML = `<div style="font-style:italic;color:#B7B7A8;">${t.peakNone}</div>`; return; }
-    let pos=events.filter(e=>e.type==='positive').length, hard=events.filter(e=>e.type==='hard').length;
-    let key = events.length<4 ? 'few' : (pos>hard*2 ? 'manyPositive' : (hard>pos ? 'manyChallenging' : 'mixed'));
-    let qs = t.reflectQs[key];
-    let colors = ['#5C7257','#8A9E84','#B56A5C'];
-    body.innerHTML = qs.map((q,i)=>`<div class="reflect-q" style="border-left-color:${colors[i%3]}">${q}</div>`).join('');
-  }
-  function toggleReflections() {
-    reflectOpen = !reflectOpen;
-    document.getElementById('reflectContent').style.display = reflectOpen ? 'block' : 'none';
-    document.getElementById('reflectChevron').style.transform = reflectOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-    if(reflectOpen) renderReflect();
-  }
-
-  // PDF export with multi-page support and language
-  function downloadPDF() {
-    let { jsPDF } = window.jspdf;
-    const t = LANGS[lang];
-    let doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    let pageWidth = 297, pageHeight = 210, margin = 20, y = 35;
-    let addPageIfNeeded = () => {
-      if (y > pageHeight - 25) {
-        doc.addPage();
-        y = 35;
-      }
     };
-    // Title
-    doc.setFillColor(253,250,244); doc.rect(0,0,pageWidth,pageHeight,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(92,114,87);
-    doc.text(profile.name ? profile.name + "'s Lifeline" : 'Lifeline', pageWidth/2, 20, { align:'center' });
-    doc.setFontSize(9); doc.setTextColor(107,107,94);
-    doc.text(new Date().toLocaleDateString(), pageWidth/2, 28, { align:'center' });
-    // Canvas image
-    let canvas = document.getElementById('lifelineCanvas');
-    let imgData = canvas.toDataURL('image/png');
-    doc.addImage(imgData, 'PNG', margin, 35, pageWidth - 2*margin, 60);
-    y = 110;
-    // Events list with pagination
-    if (events.length) {
-      doc.setFontSize(10); doc.setTextColor(92,114,87); doc.setFont('helvetica','bold');
-      doc.text(t.eventsListLabel, margin, y);
-      y += 6;
-      for (let i=0; i<events.length; i++) {
-        addPageIfNeeded();
-        let ev = events[i];
-        doc.setFontSize(9); doc.setTextColor(42,42,37); doc.setFont('helvetica','normal');
-        let line = `${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`;
-        doc.text(line, margin, y);
-        y += 5;
-        if (ev.note && ev.note.trim()) {
-          addPageIfNeeded();
-          doc.setFontSize(8); doc.setTextColor(107,107,94);
-          let noteLines = doc.splitTextToSize(`📓 ${ev.note}`, pageWidth - 2*margin - 10);
-          doc.text(noteLines, margin + 5, y);
-          y += noteLines.length * 4;
-        }
-        y += 3;
-      }
-    }
-    doc.save('lifeline.pdf');
-  }
 
-  // Local storage & reset
-  function saveToLocal() {
-    localStorage.setItem('lifeline_data', JSON.stringify({ profile, events, nextId, selectedType }));
-  }
-  function loadFromLocal() {
-    let data = localStorage.getItem('lifeline_data');
-    if (data) {
-      try {
-        let d = JSON.parse(data);
-        profile = d.profile || { name:'', age:0, dob:'' };
-        events = d.events || [];
-        nextId = d.nextId || 1;
-        selectedType = d.selectedType || 'neutral';
-        profileName.value = profile.name;
-        profileAge.value = profile.age;
-        if (profile.dob) {
-          let parts = profile.dob.split('-');
-          if(parts.length===3) { dobYear.value = parts[0]; dobMonth.value = parts[1]; dobDay.value = parts[2]; }
+    let lang = 'en';
+    let profile = { name: '', age: 0, dob: '' };
+    let events = [];
+    let nextId = 1;
+    let selectedType = 'neutral';
+    let reflectOpen = false;
+    let instrOpen = false;
+    const EVENT_COLORS = { positive: '#39FF14', neutral: '#00F0FF', hard: '#FF0000' };
+
+    const mainApp = document.getElementById('mainApp');
+    const beginBtn = document.getElementById('beginBtn');
+    const profileName = document.getElementById('profileName');
+    const profileAge = document.getElementById('profileAge');
+    const dobDay = document.getElementById('dobDay');
+    const dobMonth = document.getElementById('dobMonth');
+    const dobYear = document.getElementById('dobYear');
+    const eventDesc = document.getElementById('eventDesc');
+    const eventAgeSlider = document.getElementById('eventAge');
+    const ageDisplay = document.getElementById('ageDisplay');
+    const eventNote = document.getElementById('eventNote');
+    const addEventBtn = document.getElementById('addEventBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const importLabelBtn = document.getElementById('importLabelBtn');
+
+    function safeSet(el, prop, val) { if (el) el[prop] = val; }
+    function getEl(id) { return document.getElementById(id); }
+
+    function calculateAge() {
+        let day = dobDay.value, month = dobMonth.value, year = dobYear.value;
+        if (day && month && year) {
+            let birthDate = new Date(year, month-1, day);
+            let today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            let m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            if (age >= 0 && age <= 120) profileAge.value = age;
+            else profileAge.value = '';
+        } else profileAge.value = '';
+        if (!mainApp.classList.contains('hidden-section') && profile.age) eventAgeSlider.max = profile.age;
+    }
+
+    function initDateSelects() {
+        let months = lang === 'es' ? ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        dobDay.innerHTML = '<option value="">'+(lang==='es'?'Día':'Day')+'</option>';
+        for(let d=1;d<=31;d++) dobDay.innerHTML += `<option value="${d}">${d}</option>`;
+        dobMonth.innerHTML = '<option value="">'+(lang==='es'?'Mes':'Month')+'</option>';
+        months.forEach((m,i)=> dobMonth.innerHTML += `<option value="${i+1}">${m}</option>`);
+        let curYear = new Date().getFullYear();
+        dobYear.innerHTML = '<option value="">'+(lang==='es'?'Año':'Year')+'</option>';
+        for(let y=curYear; y>=curYear-110; y--) dobYear.innerHTML += `<option value="${y}">${y}</option>`;
+        dobDay.onchange = calculateAge;
+        dobMonth.onchange = calculateAge;
+        dobYear.onchange = calculateAge;
+    }
+
+    function toggleInstructions() {
+        instrOpen = !instrOpen;
+        const content = getEl('instrContent'), chevron = getEl('instrChevron');
+        if (content) content.style.display = instrOpen ? 'block' : 'none';
+        if (chevron) chevron.style.transform = instrOpen ? 'rotate(45deg)' : 'rotate(0deg)';
+    }
+
+    function applyLanguage() {
+        const t = LANGS[lang];
+        safeSet(getEl('globalSubhead'), 'innerText', t.globalSubhead);
+        safeSet(getEl('instrTitle'), 'innerText', t.instrTitle);
+        safeSet(getEl('instrBody'), 'innerHTML', t.instrBody);
+        safeSet(getEl('profileLabel'), 'innerText', t.profileLabel);
+        safeSet(getEl('nameLabel'), 'innerText', t.nameLabel);
+        safeSet(getEl('dobLabel'), 'innerText', t.dobLabel);
+        safeSet(getEl('ageLabel'), 'innerText', t.ageLabel);
+        safeSet(beginBtn, 'innerText', t.begin);
+        safeSet(profileName, 'placeholder', t.nameLabel);
+        safeSet(getEl('backupLabel'), 'innerText', t.backupLabel);
+        safeSet(getEl('exportBtn'), 'innerText', t.exportBtnText);
+        safeSet(getEl('eventDesc'), 'placeholder', t.descLabel);
+        safeSet(getEl('eventNote'), 'placeholder', 'Add a private reflection...');
+        if (importLabelBtn) importLabelBtn.innerHTML = `${t.importBtnText}<input type="file" id="importFile" accept=".json" style="display:none">`;
+        safeSet(getEl('backupInstructions'), 'innerHTML', t.backupInstructions);
+
+        if (!mainApp.classList.contains('hidden-section')) {
+            safeSet(getEl('addEventLabel'), 'innerText', t.addEventLabel);
+            safeSet(getEl('descLabel'), 'innerText', t.descLabel);
+            const ageLabel = getEl('ageSliderLabel');
+            if (ageLabel && ageLabel.childNodes[0]) ageLabel.childNodes[0].nodeValue = t.ageSliderLabel + ' ';
+            safeSet(getEl('typeLabel'), 'innerText', t.typeLabel);
+            safeSet(getEl('noteLabel'), 'innerHTML', t.noteLabel + ' <span style="font-weight:400;">(optional)</span>');
+            safeSet(getEl('typePosBtn'), 'innerText', t.positive);
+            safeSet(getEl('typeNeuBtn'), 'innerText', t.neutral);
+            safeSet(getEl('typeHardBtn'), 'innerText', t.challenging);
+            safeSet(addEventBtn, 'innerText', t.addBtn);
+            const eventsLabel = getEl('eventsListLabel');
+            if (eventsLabel) eventsLabel.innerHTML = t.eventsListLabel + ' <span id="eventCount"></span>';
+            safeSet(getEl('insightsLabel'), 'innerText', t.insightsLabel);
+            safeSet(getEl('reflectLabel'), 'innerText', t.reflectLabel);
+            safeSet(resetBtn, 'innerText', t.reset);
+            safeSet(downloadBtn, 'innerText', t.download);
+            const emptyMsg = getEl('eventsEmptyMsg');
+            if (emptyMsg) emptyMsg.innerText = t.noEvents;
         }
+
+        const newImportFile = getEl('importFile');
+        if (newImportFile) newImportFile.onchange = (e) => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value=''; };
+
+        renderEventsList(); drawLifeline(); refreshInsights();
+        if (reflectOpen) renderReflect();
+        initDateSelects();
+    }
+
+    function setLanguage(l) {
+        lang = l;
+        const enBtn = getEl('langEN'), esBtn = getEl('langES');
+        if (enBtn) enBtn.classList.toggle('active', l==='en');
+        if (esBtn) esBtn.classList.toggle('active', l==='es');
+        applyLanguage();
+    }
+
+    function setLanguageAndClose(l) {
+        setLanguage(l);
+        if (getEl('introOverlay')) getEl('introOverlay').style.display = 'none';
+    }
+
+    function setEventType(type) {
+        selectedType = type;
+        const posBtn = getEl('typePosBtn'), neuBtn = getEl('typeNeuBtn'), hardBtn = getEl('typeHardBtn');
+        if (posBtn) posBtn.className = 'type-btn' + (type==='positive' ? ' ap' : '');
+        if (neuBtn) neuBtn.className = 'type-btn' + (type==='neutral' ? ' an' : '');
+        if (hardBtn) hardBtn.className = 'type-btn' + (type==='hard' ? ' ah' : '');
+        updateSliderColor();
+    }
+
+    function updateSliderColor() {
+        let color = EVENT_COLORS[selectedType];
+        let sl = eventAgeSlider;
+        if (!sl) return;
+        let val = sl.value, max = sl.max;
+        let percent = (val/max)*100;
+        sl.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #ddd ${percent}%, #ddd 100%)`;
+    }
+
+    function updateAgeSlider(val) { if (ageDisplay) ageDisplay.innerText = val; updateSliderColor(); }
+
+    function addEvent() {
+        const t = LANGS[lang];
+        if (!profile.name || !profile.age) { alert(t.alertProfile); return; }
+        if (!eventDesc.value.trim()) { alert(t.alertDesc); return; }
+        let age = parseInt(eventAgeSlider.value);
+        let note = eventNote.value.trim();
+        events.push({ id: nextId++, description: eventDesc.value.trim(), age, type: selectedType, note });
+        events.sort((a,b)=>a.age-b.age);
+        eventDesc.value = ''; eventNote.value = '';
+        renderEventsList(); drawLifeline(); refreshInsights();
+        if (reflectOpen) renderReflect();
+        saveToLocal();
+    }
+
+    function deleteEvent(id) {
+        events = events.filter(e=>e.id !== id);
+        renderEventsList(); drawLifeline(); refreshInsights();
+        if (reflectOpen) renderReflect();
+        saveToLocal();
+    }
+
+    function renderEventsList() {
+        const t = LANGS[lang];
+        let el = getEl('eventsList');
+        if (!el) return;
+        let cntSpan = getEl('eventCount');
+        if (cntSpan) cntSpan.innerText = events.length ? `(${events.length})` : '';
+        if (events.length === 0) { el.innerHTML = `<div id="eventsEmptyMsg">${t.noEvents}</div>`; return; }
+        el.innerHTML = events.map(e => {
+            let color = EVENT_COLORS[e.type];
+            let typeText = e.type==='positive' ? t.positive : (e.type==='neutral' ? t.neutral : t.challenging);
+            let noteSnip = e.note ? `<div style="font-size:0.7rem;color:#555;">${e.note.substring(0,60)}${e.note.length>60?'…':''}</div>` : '';
+            let noteBtn = e.note ? `<button class="ev-note-btn" onclick="alert('📓 ${e.description}\\n\\n${e.note}')">📓</button>` : '';
+            return `<div class="ev-card"><span class="ev-dot" style="background:${color}"></span><div class="ev-info"><div class="ev-name">${e.description}</div><div class="ev-age">${t.ageSliderLabel} ${e.age} · ${typeText}</div>${noteSnip}</div>${noteBtn}<button class="ev-del" onclick="deleteEvent(${e.id})">✕</button></div>`;
+        }).join('');
+    }
+
+    function drawLifeline() {
+        let canvas = getEl('lifelineCanvas');
+        if (!canvas) return;
+        let ctx = canvas.getContext('2d');
+        const t = LANGS[lang];
+        if (!profile.age || profile.age < 1 || events.length === 0) {
+            canvas.width = 800; canvas.height = 250;
+            ctx.fillStyle = '#FDF9F2'; ctx.fillRect(0,0,800,250);
+            ctx.fillStyle = '#000'; ctx.font = 'bold 14px "DM Sans"'; ctx.textAlign = 'center';
+            ctx.fillText(t.peakNone || 'Add events to see your lifeline', 400, 125);
+            return;
+        }
+
+        // Group events by age and type to detect overlaps
+        const overlapMap = new Map(); // key: `${age}-${type}`, value: array of events
+        events.forEach(ev => {
+            const key = `${ev.age}-${ev.type}`;
+            if (!overlapMap.has(key)) overlapMap.set(key, []);
+            overlapMap.get(key).push(ev);
+        });
+
+        // Assign each event an overlap index (0-based) within its group
+        overlapMap.forEach(group => {
+            group.forEach((ev, index) => {
+                ev._overlapIndex = index;
+            });
+        });
+
+        const W = Math.max(1000, profile.age * 28 + 200);
+        const H = 380;
+        canvas.width = W; canvas.height = H;
+        ctx.fillStyle = '#FDF9F2'; ctx.fillRect(0,0,W,H);
+        const startX = 100, endX = W-90;
+        const yLevels = { positive: 80, neutral: 190, hard: 300 };
+        const baseY = 190;
+
+        // Grid lines
+        ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+        ctx.setLineDash([5,5]);
+        [80, 190, 300].forEach(y => { ctx.beginPath(); ctx.moveTo(startX,y); ctx.lineTo(endX,y); ctx.stroke(); });
+        ctx.setLineDash([]);
+
+        // Draw connecting line
+        if (events.length > 0) {
+            ctx.beginPath(); ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+            let first = events[0];
+            let px = startX + (first.age/profile.age)*(endX-startX);
+            let py = yLevels[first.type] || baseY;
+            ctx.moveTo(px, py);
+            for (let i=1; i<events.length; i++) {
+                let ev = events[i];
+                let x = startX + (ev.age/profile.age)*(endX-startX);
+                let y = yLevels[ev.type] || baseY;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // Draw dots and labels with overlap offsets
+        events.forEach(ev => {
+            let x = startX + (ev.age/profile.age)*(endX-startX);
+            let y = yLevels[ev.type] || baseY;
+            const overlapIdx = ev._overlapIndex || 0;
+
+            // Dot
+            ctx.beginPath(); ctx.arc(x, y, 9, 0, 2*Math.PI);
+            ctx.fillStyle = EVENT_COLORS[ev.type]; ctx.fill();
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.stroke();
+
+            // Label and age – shift upward for each overlapping event
+            const offset = overlapIdx * 14; // shift each subsequent label 14px higher
+            const labelY = y - 18 - offset;
+            const ageY = labelY - 14;
+
+            let label = ev.description.length > 20 ? ev.description.substring(0,18)+'…' : ev.description;
+            ctx.font = 'bold 11px "DM Sans"'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#000'; ctx.fillText(label, x, labelY);
+            ctx.font = 'bold 9px "DM Sans"'; ctx.fillStyle = EVENT_COLORS[ev.type];
+            ctx.fillText(ev.age, x, ageY);
+        });
+
+        // Age axis markers
+        ctx.fillStyle = '#000'; ctx.font = 'bold 11px "DM Sans"'; ctx.textAlign = 'center';
+        for (let age=10; age<=profile.age; age+=10) {
+            let x = startX + (age/profile.age)*(endX-startX);
+            ctx.fillText(age, x, baseY+25);
+            ctx.beginPath(); ctx.moveTo(x, baseY-5); ctx.lineTo(x, baseY+5); ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke();
+        }
+        ctx.fillText('0', startX-10, baseY+25);
+        ctx.fillText(profile.age, endX+5, baseY+25);
+        ctx.textAlign = 'start';
+    }
+
+    function refreshInsights() {
+        const t = LANGS[lang];
+        let body = getEl('insightsBody');
+        if (!body) return;
+        if (events.length < 2) { body.innerHTML = `<div style="color:#888;">${t.peakNone}</div>`; return; }
+        let pos = events.filter(e=>e.type==='positive'), hard = events.filter(e=>e.type==='hard');
+        let total = events.length, posCount=pos.length, hardCount=hard.length, neuCount=total-posCount-hardCount;
+        let peakAge=null, peakCount=0;
+        for(let a=0;a<=profile.age;a++){ let c=pos.filter(e=>e.age>=a&&e.age<=a+10).length; if(c>peakCount){peakCount=c;peakAge=a;} }
+        let valleyAge=null, valleyCount=0;
+        for(let a=0;a<=profile.age;a++){ let c=hard.filter(e=>e.age>=a&&e.age<=a+10).length; if(c>valleyCount){valleyCount=c;valleyAge=a;} }
+        let posBar=Math.round((posCount/total)*100), hardBar=Math.round((hardCount/total)*100), neuBar=100-posBar-hardBar;
+        body.innerHTML = `<div class="insight-grid">
+            <div class="insight-card"><div class="insight-badge">✨</div><div class="insight-title">${t.peakTitle}</div><div class="insight-value">${peakAge!==null?t.peakUnit+' '+peakAge+'–'+(peakAge+10):t.peakNone}</div></div>
+            <div class="insight-card"><div class="insight-badge">🌊</div><div class="insight-title">${t.valleyTitle}</div><div class="insight-value">${valleyAge!==null?t.peakUnit+' '+valleyAge+'–'+(valleyAge+10):t.valleyNone}</div></div>
+            <div class="insight-card"><div class="insight-badge">⚖️</div><div class="insight-title">${t.balanceTitle}</div><div style="display:flex;height:8px;margin:8px 0;border:2px solid #000;"><div style="width:${posBar}%;background:#39FF14"></div><div style="width:${neuBar}%;background:#00F0FF"></div><div style="width:${hardBar}%;background:#FF0000"></div></div><div style="font-weight:700;font-size:0.75rem;"><span style="color:#39FF14">${posCount} pos</span> <span style="color:#00F0FF">${neuCount} neu</span> <span style="color:#FF0000">${hardCount} chal</span></div></div>
+            <div class="insight-card"><div class="insight-badge">📍</div><div class="insight-title">${t.totalTitle}</div><div class="insight-value" style="font-size:2.5rem;">${total}</div></div>
+        </div>`;
+    }
+
+    function renderReflect() {
+        const t = LANGS[lang];
+        let body = getEl('reflectBody');
+        if (!body) return;
+        if (events.length < 2) { body.innerHTML = `<div style="color:#888;">${t.peakNone}</div>`; return; }
+        let pos=events.filter(e=>e.type==='positive').length, hard=events.filter(e=>e.type==='hard').length;
+        let key = events.length<4 ? 'few' : (pos>hard*2 ? 'manyPositive' : (hard>pos ? 'manyChallenging' : 'mixed'));
+        let qs = t.reflectQs[key];
+        let colors = ['#39FF14','#00F0FF','#FF0000'];
+        body.innerHTML = qs.map((q,i)=>`<div class="reflect-q" style="border-left-color:${colors[i%3]};">${q}</div>`).join('');
+    }
+
+    function toggleReflections() {
+        reflectOpen = !reflectOpen;
+        const content = getEl('reflectContent'), chevron = getEl('reflectChevron');
+        if (content) content.style.display = reflectOpen ? 'block' : 'none';
+        if (chevron) chevron.style.transform = reflectOpen ? 'rotate(45deg)' : 'rotate(0deg)';
+        if (reflectOpen) renderReflect();
+    }
+
+    function wrapTextWithBreaks(doc, text, maxWidth, fontSize) {
+        doc.setFontSize(fontSize);
+        const paragraphs = text.split('\n');
+        let lines = [];
+        paragraphs.forEach(para => {
+            if (para.length === 0) { lines.push(''); return; }
+            const words = para.split(' ');
+            let currentLine = '';
+            for (let word of words) {
+                if (doc.getTextWidth(word) > maxWidth) {
+                    if (currentLine.length > 0) { lines.push(currentLine); currentLine = ''; }
+                    let remaining = word;
+                    while (remaining.length > 0) {
+                        let chunk = '';
+                        for (let i = 1; i <= remaining.length; i++) {
+                            if (doc.getTextWidth(remaining.substring(0, i)) > maxWidth) break;
+                            chunk = remaining.substring(0, i);
+                        }
+                        if (chunk.length === 0) chunk = remaining.charAt(0);
+                        lines.push(chunk);
+                        remaining = remaining.slice(chunk.length);
+                    }
+                } else {
+                    let testLine = currentLine.length ? currentLine + ' ' + word : word;
+                    if (doc.getTextWidth(testLine) > maxWidth) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+            }
+            if (currentLine.length > 0) lines.push(currentLine);
+        });
+        return lines;
+    }
+
+    function downloadPDF() {
+        let { jsPDF } = window.jspdf;
+        const t = LANGS[lang];
+        let doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        let pageWidth = 297, pageHeight = 210, margin = 30;
+        let y = margin, usableWidth = pageWidth - 2*margin;
+        let textWidth = usableWidth - 16;
+        let noteTextWidth = textWidth - 8;
+
+        doc.setFillColor(253,249,242); doc.rect(0,0,pageWidth,pageHeight,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(0,0,0);
+        doc.text(profile.name ? profile.name + "'s Lifeline" : 'Lifeline', pageWidth/2, y, {align:'center'});
+        y += 8;
+        doc.setFontSize(9); doc.setTextColor(80,80,80);
+        doc.text(new Date().toLocaleDateString(), pageWidth/2, y, {align:'center'});
+        y += 12;
+
+        let canvas = getEl('lifelineCanvas');
+        if (canvas && events.length) {
+            const canvasRatio = canvas.height / canvas.width;
+            let imgWidth = usableWidth;
+            let imgHeight = imgWidth * canvasRatio;
+            const maxImgHeight = 70;
+            if (imgHeight > maxImgHeight) { imgHeight = maxImgHeight; imgWidth = imgHeight / canvasRatio; }
+            const imgX = margin + (usableWidth - imgWidth)/2;
+            doc.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, y, imgWidth, imgHeight);
+            y += imgHeight + 8;
+        }
+
+        if (events.length) {
+            doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+            doc.text(t.eventsListLabel, margin, y);
+            y += 8;
+
+            events.forEach((ev, i) => {
+                const descLine = `${i+1}. ${ev.description} (${t.ageSliderLabel} ${ev.age})`;
+                const descLines = doc.splitTextToSize(descLine, textWidth);
+                // Removed the emoji prefix to avoid encoding issues
+                const noteLines = ev.note ? wrapTextWithBreaks(doc, ev.note, noteTextWidth, 8) : null;
+
+                const lineHeight = 4.5;
+                const blockHeight = (descLines.length + (noteLines ? noteLines.length : 0)) * lineHeight + 8;
+
+                if (y + blockHeight > pageHeight - margin) { doc.addPage(); y = margin; }
+
+                doc.setFillColor(255,255,255); doc.setDrawColor(0,0,0); doc.setLineWidth(0.5);
+                doc.rect(margin, y, usableWidth, blockHeight, 'FD');
+
+                doc.setFontSize(9); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+                let lineY = y + 4;
+                descLines.forEach(line => { doc.text(line, margin + 8, lineY); lineY += lineHeight; });
+                if (noteLines) {
+                    doc.setFontSize(8); doc.setTextColor(80,80,80);
+                    noteLines.forEach(line => { doc.text(line, margin + 16, lineY); lineY += lineHeight; });
+                }
+                y += blockHeight + 3;
+            });
+        }
+
+        doc.save('lifeline.pdf');
+    }
+
+    function saveToLocal() { localStorage.setItem('lifeline_data', JSON.stringify({ profile, events, nextId, selectedType })); }
+    function loadFromLocal() {
+        let data = localStorage.getItem('lifeline_data');
+        if (data) {
+            try {
+                let d = JSON.parse(data);
+                profile = d.profile || { name:'', age:0, dob:'' };
+                events = d.events || []; nextId = d.nextId || 1; selectedType = d.selectedType || 'neutral';
+                profileName.value = profile.name; profileAge.value = profile.age;
+                if (profile.dob) { let parts = profile.dob.split('-'); if(parts.length===3) { dobYear.value = parts[0]; dobMonth.value = parts[1]; dobDay.value = parts[2]; } }
+                setEventType(selectedType);
+                if (profile.name && profile.age) { mainApp.classList.remove('hidden-section'); eventAgeSlider.max = profile.age; }
+                renderEventsList(); drawLifeline(); refreshInsights();
+            } catch(e) {}
+        }
+    }
+
+    function resetAll() {
+        if (confirm(LANGS[lang].reset + '?')) {
+            localStorage.removeItem('lifeline_data');
+            profile = { name:'', age:0, dob:'' }; events = []; nextId = 1; selectedType = 'neutral';
+            profileName.value = ''; profileAge.value = ''; dobDay.value = ''; dobMonth.value = ''; dobYear.value = '';
+            eventDesc.value = ''; eventNote.value = ''; setEventType('neutral');
+            mainApp.classList.add('hidden-section');
+            renderEventsList(); drawLifeline(); refreshInsights();
+            saveToLocal();
+        }
+    }
+
+    function exportData() {
+        let blob = new Blob([JSON.stringify({ profile, events, nextId, selectedType },null,2)], {type:'application/json'});
+        let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lifeline-backup.json'; a.click();
+    }
+
+    function importData(file) {
+        let reader = new FileReader();
+        reader.onload = e => {
+            try {
+                let d = JSON.parse(e.target.result);
+                if (d.profile && d.events !== undefined) {
+                    profile = d.profile; events = d.events; nextId = d.nextId||1; selectedType = d.selectedType||'neutral';
+                    profileName.value = profile.name; profileAge.value = profile.age;
+                    if (profile.dob) { let parts = profile.dob.split('-'); if(parts.length===3) { dobYear.value = parts[0]; dobMonth.value = parts[1]; dobDay.value = parts[2]; } }
+                    setEventType(selectedType);
+                    if (profile.name && profile.age) { mainApp.classList.remove('hidden-section'); eventAgeSlider.max = profile.age; }
+                    renderEventsList(); drawLifeline(); refreshInsights();
+                    saveToLocal();
+                    alert(LANGS[lang].importSuccess);
+                }
+            } catch(err) { alert('Invalid backup file.'); }
+        };
+        reader.readAsText(file);
+    }
+
+    function beginSession() {
+        const t = LANGS[lang];
+        let name = profileName.value.trim();
+        let age = parseInt(profileAge.value);
+        if (!name || isNaN(age) || age < 1) { alert(t.alertProfile); return; }
+        let day = dobDay.value, month = dobMonth.value, year = dobYear.value;
+        profile = { name, age, dob: (day&&month&&year)?`${year}-${month}-${day}`:'' };
+        saveToLocal();
+        mainApp.classList.remove('hidden-section');
+        eventAgeSlider.max = age;
         setEventType(selectedType);
-        renderEventsList();
-        drawLifeline();
-        refreshInsights();
-        if(reflectOpen) renderReflect();
-      } catch(e) {}
+        applyLanguage();
+        renderEventsList(); drawLifeline(); refreshInsights();
     }
-  }
-  function resetAll() {
-    if (confirm(LANGS[lang].reset + '?')) {
-      localStorage.removeItem('lifeline_data');
-      profile = { name:'', age:0, dob:'' };
-      events = [];
-      nextId = 1;
-      selectedType = 'neutral';
-      profileName.value = '';
-      profileAge.value = '';
-      dobDay.value = ''; dobMonth.value = ''; dobYear.value = '';
-      eventDesc.value = ''; eventNote.value = '';
-      setEventType('neutral');
-      renderEventsList();
-      drawLifeline();
-      refreshInsights();
-      if(reflectOpen) renderReflect();
-      saveToLocal();
-    }
-  }
-  function exportData() {
-    let data = { profile, events, nextId, selectedType };
-    let blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'lifeline-backup.json';
-    a.click();
-    URL.revokeObjectURL(blob.href);
-  }
-  function importData(file) {
-    let reader = new FileReader();
-    reader.onload = e => {
-      try {
-        let d = JSON.parse(e.target.result);
-        if (d.profile && d.events !== undefined) {
-          profile = d.profile;
-          events = d.events;
-          nextId = d.nextId || 1;
-          selectedType = d.selectedType || 'neutral';
-          profileName.value = profile.name;
-          profileAge.value = profile.age;
-          if (profile.dob) {
-            let parts = profile.dob.split('-');
-            if(parts.length===3) { dobYear.value = parts[0]; dobMonth.value = parts[1]; dobDay.value = parts[2]; }
-          }
-          setEventType(selectedType);
-          renderEventsList();
-          drawLifeline();
-          refreshInsights();
-          if(reflectOpen) renderReflect();
-          saveToLocal();
-          alert(LANGS[lang].importSuccess);
-        } else throw new Error();
-      } catch(err) { alert('Invalid backup file.'); }
-    };
-    reader.readAsText(file);
-  }
 
-  // Begin button: show main app, save profile
-  function beginSession() {
-    const t = LANGS[lang];
-    let name = profileName.value.trim();
-    let age = parseInt(profileAge.value);
-    if (!name || isNaN(age) || age < 1) { alert(t.alertProfile); return; }
-    let day = dobDay.value, month = dobMonth.value, year = dobYear.value;
-    let dob = (day && month && year) ? `${year}-${month}-${day}` : '';
-    profile = { name, age, dob };
-    saveToLocal();
-    mainApp.classList.remove('hidden-section');
-    eventAgeSlider.max = age;
+    beginBtn.onclick = beginSession;
+    addEventBtn.onclick = addEvent;
+    resetBtn.onclick = resetAll;
+    downloadBtn.onclick = downloadPDF;
+    exportBtn.onclick = exportData;
+
+    const initialImport = getEl('importFile');
+    if (initialImport) initialImport.onchange = e => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value=''; };
+    if (importLabelBtn) importLabelBtn.addEventListener('click', () => { const imp = getEl('importFile'); if (imp) imp.click(); });
+
+    initDateSelects();
+    loadFromLocal();
     updateSliderColor();
-    applyLanguage(); // ensure labels are correct now that mainApp is visible
-    renderEventsList();
-    drawLifeline();
-    refreshInsights();
-    if (reflectOpen) renderReflect();
-  }
-
-  // Event listeners
-  beginBtn.onclick = beginSession;
-  addEventBtn.onclick = addEvent;
-  resetBtn.onclick = resetAll;
-  downloadBtn.onclick = downloadPDF;
-  exportBtn.onclick = exportData;
-  importFile.onchange = (e) => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value=''; };
-  document.querySelector('label.btn-ghost').addEventListener('click', () => importFile.click());
-
-  // Initialization
-  initDateSelects();
-  setLanguage('en');
-  loadFromLocal();
-  if (profile.name && profile.age) {
-    mainApp.classList.remove('hidden-section');
-    profileName.value = profile.name;
-    profileAge.value = profile.age;
-    eventAgeSlider.max = profile.age;
-    renderEventsList();
-    drawLifeline();
-    refreshInsights();
-  } else {
-    mainApp.classList.add('hidden-section');
-  }
-  updateSliderColor();
 </script>
 </body>
 </html>
